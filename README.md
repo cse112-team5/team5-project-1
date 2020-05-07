@@ -1,1 +1,3 @@
-# team5-project
+Phantime
+
+A productivity tracker extension
