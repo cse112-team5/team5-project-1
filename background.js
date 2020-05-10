@@ -20,7 +20,7 @@ firebase.initializeApp(config);
 
 const initApp = () => {
   // Listen for auth state changes.
-  // TODO: we'll implement this later when we startw working on user auth
+  // TODO: we'll implement this later when we start working on user auth
   firebase.auth().onAuthStateChanged(function(user) {
     console.log('User state change detected from the Background script of the Chrome Extension:', user);
   });
