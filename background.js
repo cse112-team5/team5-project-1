@@ -53,34 +53,27 @@ const incrementDomainActivity = (domain, increment) => {
   if (domain.length == 0) return -1;
 
   const db = firebase.firestore();
-  
+
   var vis = -1;
   var tim = 0;
   var prod = false;
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
-    
-    var keys = Object.keys(domains);
 
-    keys.forEach(key => {
-      if (key === domain) {
-
-        vis = domains[key]["visits"];
-        tim = domains[key]["time"]; 
-        prod = domains[key]["productive"];
-      }
-    })
+    if (domain in domains) {
+      vis = domains[domain]["visits"];
+      tim = domains[domain]["time"]; 
+      prod = domains[domain]["productive"]; 
+    }
+    else return 1;  // couldn't find the domain
     
-    if(vis == -1) return 1; // couldn't find the domain
-
-    sitesList = getDomains();
+    var sitesList = snapshot.data();
     
-    sitesList.then(sitesList_ => {
-      var userRef = db.collection("users").doc("user_0");
-      sitesList_["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
-      userRef.set(sitesList_);
-      return 0;
-    })
+    var userRef = db.collection("users").doc("user_0");
+    console.log("incrementing activity time for " + domain + " by " + increment);
+    sitesList["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
+    userRef.set(sitesList);
+    return 0;
   })
 }
 
@@ -103,28 +96,21 @@ const incrementDomainVisits = (domain) => {
   var prod = false;
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
-    
-    var keys = Object.keys(domains);
 
-    keys.forEach(key => {
-      if (key === domain) {
+    if (domain in domains) {
+      vis = domains[domain]["visits"];
+      tim = domains[domain]["time"]; 
+      prod = domains[domain]["productive"]; 
+    }
+    else return 1;  // couldn't find the domain
 
-        vis = domains[key]["visits"];
-        tim = domains[key]["time"]; 
-        prod = domains[key]["productive"];
-      }
-    })
-    
-    if(vis == -1) return 1; // couldn't find the domain
-
-    sitesList = getDomains();
-    
-    sitesList.then(sitesList_ => {
-      var userRef = db.collection("users").doc("user_0");
-      sitesList_["domains"][domain] = { time: tim, productive: prod, visits: vis + 1 };
-      userRef.set(sitesList_);
-      return 0;
-    })
+    var sitesList = snapshot.data();
+   
+    console.log("incrementing visits for " + domain);
+    var userRef = db.collection("users").doc("user_0");
+    sitesList["domains"][domain] = { time: tim, productive: prod, visits: vis + 1 };
+    userRef.set(sitesList);
+    return 0;
   })
 }
 
@@ -228,14 +214,13 @@ function addURL(domain) {
   console.log(domain);
   sitesList.then(sitesList_ => {
     tempMap = new Map(Object.entries(sitesList_["domains"]));
-    if (!tempMap.has(domain)) {
 
+    if (!tempMap.has(domain)) {
       const db = firebase.firestore();
       var userRef = db.collection("users").doc("user_0");
       var domainString = "domains." + domain;
-      sitesList_["domains"][domain] = { time: 0, productive: false, visits: 0 };
+      sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
       userRef.set(sitesList_);
-
     }
     else {
       incrementDomainVisits(domain);

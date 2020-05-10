@@ -45,26 +45,19 @@ const updateDomainProductive = (domain, val) => {
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
     
-    var keys = Object.keys(domains);
+    if (domain in domains) {
+      vis = domains[domain]["visits"];
+      tim = domains[domain]["time"]; 
+      prod = domains[domain]["productive"]; 
+    }
+    else return 1;  // couldn't find the domain
 
-    keys.forEach(key => {
-      if (key === domain) {
-
-        vis = domains[key]["visits"];
-        tim = domains[key]["time"]; 
-        prod = domains[key]["productive"];
-      }
-    })
+    var sitesList = snapshot.data();
     
-    if(vis == -1) return 1; // couldn't find the domain
-
-    sitesList = getDomains();
-    
-    sitesList.then(sitesList_ => {
-      var userRef = db.collection("users").doc("user_0");
-      sitesList_["domains"][domain] = { time: tim, productive: val, visits: vis };
-      userRef.set(sitesList_);
-      return 0;
-    })
+    var userRef = db.collection("users").doc("user_0");
+    console.log("making productivity = " + val + " for " + domain);
+    sitesList["domains"][domain] = { time: tim, productive: val, visits: vis };
+    userRef.set(sitesList);
+    return 0;
   })
 }
