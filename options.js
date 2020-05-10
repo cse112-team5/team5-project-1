@@ -9,6 +9,7 @@ var config = {
   measurementId: "TODO"
 };
 
+
 firebase.initializeApp(config);
 
 /*
@@ -24,7 +25,6 @@ firebase.initializeApp(config);
  */
 
 /*
- * TODO
  * Updates the 'productive' flag for the domain for the user
  *
  * paremeters:
@@ -34,6 +34,30 @@ firebase.initializeApp(config);
  * return
  *      0 upon success, 1 otherwise
  */
-const updateDomainProductive = () => {
-  return 0;
+const updateDomainProductive = (domain, val) => {
+  if (domain.length == 0) return -1;
+
+  const db = firebase.firestore();
+  
+  var vis = -1;
+  var tim = 0;
+  var prod = false;
+  db.collection('users').doc('user_0').get().then((snapshot) => {
+    var domains = snapshot.data()["domains"];
+    
+    if (domain in domains) {
+      vis = domains[domain]["visits"];
+      tim = domains[domain]["time"]; 
+      prod = domains[domain]["productive"]; 
+    }
+    else return 1;  // couldn't find the domain
+
+    var sitesList = snapshot.data();
+    
+    var userRef = db.collection("users").doc("user_0");
+    console.log("making productivity = " + val + " for " + domain);
+    sitesList["domains"][domain] = { time: tim, productive: val, visits: vis };
+    userRef.set(sitesList);
+    return 0;
+  })
 }
