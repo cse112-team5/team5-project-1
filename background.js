@@ -95,7 +95,11 @@ const getProductivity = () => {
  */
 
 var curPage = {};
-
+var map = new Map();
+var listOfDomainsToUpdate = new Array();
+var views = chrome.extension.getViews({
+  type: "popup"
+});
 
 const formatDuration = (d) => {
   if (d < 0) {
@@ -116,16 +120,93 @@ const tick = () => {
   chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
 };
 
-const handleUpdate = (tabId, changeInfo, tab) => {
-  const domain = changeInfo.url;
-  if (curPage.domain === domain)
-    return;
+const updateDatabaseWithDomainTimes = () =>{
+  // add domain of current tab to list
+  listOfDomainsToUpdate.push(curPage.domain);
+  const oldTime = map.get(curPage.domain);
+  map.set(curPage.domain, oldTime + (new Date() - curPage.begin));
+  curPage.begin = new Date(); // reset
 
-  curPage.domain = domain;
-  curPage.begin = new Date();
-  curPage.tabId = tabId;
+  const db = firebase.firestore();
+  const user = db.collection('users').doc('user_0');
+  let userData = user.get().then(documentSnapshot => {
+    if (documentSnapshot.exists){
+      let data = documentSnapshot.data();
+
+      for (let i = 0; i < listOfDomainsToUpdate.length; i++){
+
+        const currDomain = listOfDomainsToUpdate[i];
+        const tempMap = new Map(Object.entries(data["domains"]));
+        
+        // get time for domain
+        const time = map.get(currDomain);
+
+        if (tempMap.has(currDomain)){
+          // update
+          data["domains"][currDomain] = { time: time, productive: data["domains"][currDomain]["productive"], visits: data["domains"][currDomain]["visits"] };
+          user.set(data);
+        } else {
+          // add
+          data["domains"][currDomain] = { time: time, productive: false, visits: 1 };
+          user.set(data);
+        }
+      }
+    }
+  });
 };
 
+const handleUpdate = (tabId, changeInfo, tab) => {
+  console.log("updated tab");
+  const domain = changeInfo.url;
+
+  if (curPage.domain === domain){
+    return;
+  } else if (domain === "undefined" || domain == null){
+    return;
+  };
+  
+  console.log("new: " + domain);
+  console.log("old: " + curPage.domain);
+
+  updatecurPage(domain, tabId);
+};
+
+const changeTab = (obj) => {
+  chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
+    let url = tabs[0].url;
+    if (url === curPage.domain){
+      return;
+    }
+    updatecurPage(url, tabs[0].id);
+  });
+};
+
+const updatecurPage = (domain, tabId) => {
+
+  // update dictionary
+  if (curPage.domain){
+    if (map.has(curPage.domain)){
+      const oldTime = map.get(curPage.domain);
+      map.set(curPage.domain, oldTime + (new Date() - curPage.begin));
+    } else {
+      map.set(curPage.domain, (new Date() - curPage.begin));
+    }
+    listOfDomainsToUpdate.push(curPage.domain);
+  }
+
+  // update curPage
+  curPage.domain = domain;
+  curPage.begin = new Date(); 
+  curPage.tabId = parseInt(tabId);
+}
+
+// connects background.js to popup.js
+chrome.extension.onConnect.addListener(function(port) {
+  port.onMessage.addListener(function(msg) {
+       console.log("background message recieved " + msg);
+       port.postMessage(curPage.domain);
+  });
+})
 
 
 /*
@@ -134,7 +215,10 @@ const handleUpdate = (tabId, changeInfo, tab) => {
 
 
 setInterval(tick, 1000);
+setInterval(updateDatabaseWithDomainTimes, 5000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
+chrome.tabs.onActivated.addListener(changeTab);
+
 
 window.onload = function() {
   initApp();
