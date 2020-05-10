@@ -148,11 +148,12 @@ const getProductivity = () => {
     })
     console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
     console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
-    if (totalTime == 0) return -1;
+    
+    if (totalTime == 0) return -1; // cannot divide by zero, return error
 
     return (prodTime / totalTime) * 100;
   })
-  return 0;
+  return -1; // something went wrong, return error
 }
 
 
