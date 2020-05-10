@@ -116,16 +116,26 @@ const tick = () => {
   if (curPage.begin === undefined)
     return;
 
-  const timeSinceBegin = formatDuration(new Date() - curPage.begin);
-  chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
+  if (map.has(curPage.domain)){
+    const timeSinceBegin = formatDuration(new Date() - curPage.begin + map.get(curPage.domain));
+    chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
+  } else {
+    const timeSinceBegin = formatDuration(new Date() - curPage.begin);
+    chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
+  }
 };
 
 const updateDatabaseWithDomainTimes = () =>{
   // add domain of current tab to list
   listOfDomainsToUpdate.push(curPage.domain);
-  const oldTime = map.get(curPage.domain);
-  map.set(curPage.domain, oldTime + (new Date() - curPage.begin));
-  curPage.begin = new Date(); // reset
+  const currTime = new Date();
+  if (map.has(curPage.domain)){
+    const oldTime = map.get(curPage.domain);
+    map.set(curPage.domain, oldTime + (currTime- curPage.begin));
+  } else {
+    map.set(curPage.domain, (currTime - curPage.begin));
+  }
+  curPage.begin = currTime; // reset
 
   const db = firebase.firestore();
   const user = db.collection('users').doc('user_0');
@@ -183,13 +193,15 @@ const changeTab = (obj) => {
 
 const updatecurPage = (domain, tabId) => {
 
+  const currTime = new Date();
+
   // update dictionary
   if (curPage.domain){
     if (map.has(curPage.domain)){
       const oldTime = map.get(curPage.domain);
-      map.set(curPage.domain, oldTime + (new Date() - curPage.begin));
+      map.set(curPage.domain, oldTime + (currTime- curPage.begin));
     } else {
-      map.set(curPage.domain, (new Date() - curPage.begin));
+      map.set(curPage.domain, (currTime - curPage.begin));
     }
     listOfDomainsToUpdate.push(curPage.domain);
   }
