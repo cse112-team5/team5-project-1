@@ -135,7 +135,7 @@ const updateDatabaseWithDomainTimes = () =>{
   } else {
     map.set(curPage.domain, (currTime - curPage.begin));
   }
-  curPage.begin = currTime; // reset
+  curPage.begin = currTime; // reset start time for current active domain
 
   const db = firebase.firestore();
   const user = db.collection('users').doc('user_0');
@@ -154,43 +154,47 @@ const updateDatabaseWithDomainTimes = () =>{
         if (tempMap.has(currDomain)){
           // update
           data["domains"][currDomain] = { time: time, productive: data["domains"][currDomain]["productive"], visits: data["domains"][currDomain]["visits"] };
-          user.set(data);
         } else {
           // add
           data["domains"][currDomain] = { time: time, productive: false, visits: 1 };
-          user.set(data);
         }
       }
+      user.set(data);
     }
+    listOfDomainsToUpdate = new Array(); // clear list
   });
 };
 
+// handles change in url for a tab
 const handleUpdate = (tabId, changeInfo, tab) => {
   console.log("updated tab");
-  const domain = changeInfo.url;
+  const url = changeInfo.url;
+
+  if (url === "undefined" || url == null){
+    return;
+  };
+
+  let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+  let domain = matches && matches[1];
 
   if (curPage.domain === domain){
     return;
-  } else if (domain === "undefined" || domain == null){
-    return;
-  };
-  
-  console.log("new: " + domain);
-  console.log("old: " + curPage.domain);
+  }
 
   updatecurPage(domain, tabId);
 };
 
-const changeTab = (obj) => {
+// handles when a user changes active tab
+const handleChangeTab = (obj) => {
   chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
     let url = tabs[0].url;
-    if (url === curPage.domain){
-      return;
-    }
-    updatecurPage(url, tabs[0].id);
+    let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+    let domain = matches && matches[1];
+    updatecurPage(domain, tabs[0].id);
   });
 };
 
+// updates curPage details and map of times
 const updatecurPage = (domain, tabId) => {
 
   const currTime = new Date();
@@ -227,9 +231,10 @@ chrome.extension.onConnect.addListener(function(port) {
 
 
 setInterval(tick, 1000);
-setInterval(updateDatabaseWithDomainTimes, 5000);
+// updates database every minute; only reduce time for testing as there will be many writes
+setInterval(updateDatabaseWithDomainTimes, 60000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
-chrome.tabs.onActivated.addListener(changeTab);
+chrome.tabs.onActivated.addListener(handleChangeTab);
 
 
 window.onload = function() {

@@ -46,9 +46,9 @@ port.onMessage.addListener(function(msg) {
     });
   }
   else{
-    let matches = msg.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-    let domain = matches && matches[1];
-    this.document.getElementById('domain').innerHTML = domain;
+    //let matches = msg.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+    //let domain = matches && matches[1];
+    this.document.getElementById('domain').innerHTML = msg;
   }
 }); 
 
