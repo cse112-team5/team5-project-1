@@ -12,16 +12,14 @@ var config = {
   projectId: "TODO",
   storageBucket: "TODO",
   messagingSenderId: "TODO",
-  appId: "TODO",
-  measurementId: "TODO"
+  appId: "TODO"
 };
-
 firebase.initializeApp(config);
 
 const initApp = () => {
   // Listen for auth state changes.
   // TODO: we'll implement this later when we startw working on user auth
-  firebase.auth().onAuthStateChanged(function(user) {
+  firebase.auth().onAuthStateChanged(function (user) {
     console.log('User state change detected from the Background script of the Chrome Extension:', user);
   });
 }
@@ -113,18 +111,53 @@ const tick = () => {
     return;
 
   const timeSinceBegin = formatDuration(new Date() - curPage.begin);
-  chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
+  chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin });
 };
 
+async function getDomains() {
+  const db = firebase.firestore();
+  const user = db.collection('users').doc('user_0');
+
+  userData = await user.get();
+
+  return userData.data();
+}
+
 const handleUpdate = (tabId, changeInfo, tab) => {
+
   const domain = changeInfo.url;
+  if (domain === undefined)
+    return;
   if (curPage.domain === domain)
     return;
 
   curPage.domain = domain;
   curPage.begin = new Date();
   curPage.tabId = tabId;
+
+  var urlParts = domain.replace('http://', '').replace('https://', '').split(/[/?#]/);
+  cleanDomain = urlParts[0];
+  addURL(cleanDomain);
 };
+
+function addURL(domain) {
+  sitesList = getDomains();
+  console.log(domain);
+  sitesList.then(sitesList_ => {
+    tempMap = new Map(Object.entries(sitesList_["domains"]));
+    if (!tempMap.has(domain)) {
+
+      const db = firebase.firestore();
+      var userRef = db.collection("users").doc("user_0");
+      var domainString = "domains." + domain;
+      sitesList_["domains"][domain] = { time: 0, productive: false, visits: 0 };
+      userRef.set(sitesList_);
+
+    }
+  })
+}
+
+
 
 
 
@@ -136,6 +169,6 @@ const handleUpdate = (tabId, changeInfo, tab) => {
 setInterval(tick, 1000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
 
-window.onload = function() {
+window.onload = function () {
   initApp();
 };

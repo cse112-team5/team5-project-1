@@ -5,8 +5,7 @@ var config = {
   projectId: "TODO",
   storageBucket: "TODO",
   messagingSenderId: "TODO",
-  appId: "TODO",
-  measurementId: "TODO"
+  appId: "TODO"
 };
 
 firebase.initializeApp(config);
@@ -35,14 +34,15 @@ function updateSites(sitesList) {
 
     console.log(sortedDomains);
 
+    var MAX_SITES = 5
+    var numSites = sortedDomains.length < MAX_SITES ? sortedDomains.length : MAX_SITES;
+
     var list = document.createElement('ol');
-    for (var i = 0; i < sortedDomains.length; i++) {
+    for (var i = 0; i < numSites; i++) {
       var item = document.createElement('li');
       item.appendChild(document.createTextNode(sortedDomains[i][0]));
       list.appendChild(item);
-    }
-    var MAX_SITES = 5;
-    var numSites = sortedDomains.length < MAX_SITES ? sortedDomains.length : MAX_SITES;
+    };
 
     document.getElementById("topsites").innerHTML = "Top " + numSites + " visted sites";
     document.getElementById('sitesList').appendChild(list);
