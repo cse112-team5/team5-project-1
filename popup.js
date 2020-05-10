@@ -8,6 +8,7 @@ var config = {
   appId: "TODO"
 };
 
+
 firebase.initializeApp(config);
 
 function compareTime(a, b) {
