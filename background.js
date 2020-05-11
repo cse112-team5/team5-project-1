@@ -164,7 +164,7 @@ const getProductivity = () => {
 
 var curPage = {};
 var map = new Map();
-var listOfDomainsToUpdate = new Array();
+var domainsToUpdate = new Map();
 var views = chrome.extension.getViews({
   type: "popup"
 });
@@ -194,8 +194,6 @@ const tick = () => {
 };
 
 const updateDatabaseWithDomainTimes = () =>{
-  // add domain of current tab to list
-  listOfDomainsToUpdate.push(curPage.domain);
   const currTime = new Date();
   if (map.has(curPage.domain)){
     const oldTime = map.get(curPage.domain);
@@ -203,34 +201,19 @@ const updateDatabaseWithDomainTimes = () =>{
   } else {
     map.set(curPage.domain, (currTime - curPage.begin));
   }
+
+  if (domainsToUpdate.has(curPage.domain)){
+    const oldTime = domainsToUpdate.get(curPage.domain);
+    domainsToUpdate.set(curPage.domain, oldTime + (currTime- curPage.begin));
+  } else {
+    domainsToUpdate.set(curPage.domain, (currTime - curPage.begin));
+  }
+
   curPage.begin = currTime; // reset start time for current active domain
-
-  const db = firebase.firestore();
-  const user = db.collection('users').doc('user_0');
-  let userData = user.get().then(documentSnapshot => {
-    if (documentSnapshot.exists){
-      let data = documentSnapshot.data();
-
-      for (let i = 0; i < listOfDomainsToUpdate.length; i++){
-
-        const currDomain = listOfDomainsToUpdate[i];
-        const tempMap = new Map(Object.entries(data["domains"]));
-        
-        // get time for domain
-        const time = map.get(currDomain);
-
-        if (tempMap.has(currDomain)){
-          // update
-          data["domains"][currDomain] = { time: time, productive: data["domains"][currDomain]["productive"], visits: data["domains"][currDomain]["visits"] };
-        } else {
-          // add
-          data["domains"][currDomain] = { time: time, productive: false, visits: 1 };
-        }
-      }
-      user.set(data);
-    }
-    listOfDomainsToUpdate = new Array(); // clear list
+  domainsToUpdate.forEach((domain, increment, map) => {
+    incrementDomainActivity(domain, increment);
   });
+  domainsToUpdate = new Map(); // clear list
 };
 
 async function getDomains() {
@@ -287,7 +270,13 @@ const updatecurPage = (domain, tabId) => {
     } else {
       map.set(curPage.domain, (currTime - curPage.begin));
     }
-    listOfDomainsToUpdate.push(curPage.domain);
+    
+    if (domainsToUpdate.has(curPage.domain)){
+      const oldTime = map.get(curPage.domain);
+      domainsToUpdate.set(curPage.domain, oldTime + (currTime- curPage.begin));
+    } else {
+      domainsToUpdate.set(curPage.domain, (currTime - curPage.begin));
+    }
   }
 
   // update curPage
