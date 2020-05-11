@@ -65,10 +65,14 @@ const incrementDomainActivity = (domain, increment) => {
       tim = domains[domain]["time"]; 
       prod = domains[domain]["productive"]; 
     }
-    else return 1;  // couldn't find the domain
-    
+    else {
+      vis = 1;
+      tim = 0;
+      prod = true;
+    }
+
     var sitesList = snapshot.data();
-    
+
     var userRef = db.collection("users").doc("user_0");
     console.log("incrementing activity time for " + domain + " by " + increment);
     sitesList["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
@@ -90,7 +94,7 @@ const incrementDomainVisits = (domain) => {
   if (domain.length == 0) return -1;
 
   const db = firebase.firestore();
-  
+
   var vis = -1;
   var tim = 0;
   var prod = false;
@@ -105,7 +109,7 @@ const incrementDomainVisits = (domain) => {
     else return 1;  // couldn't find the domain
 
     var sitesList = snapshot.data();
-   
+
     console.log("incrementing visits for " + domain);
     var userRef = db.collection("users").doc("user_0");
     sitesList["domains"][domain] = { time: tim, productive: prod, visits: vis + 1 };
@@ -128,32 +132,31 @@ const incrementDomainVisits = (domain) => {
  * return
  *      0.0 - 100.0 upon success, -1 otherwise
  */
-const getProductivity = () => {
+const getProductivity = async () => {
   const db = firebase.firestore();
 
-  db.collection('users').doc('user_0').get().then((snapshot) => {
-    var domains = snapshot.data()["domains"];
-    
-    var keys = Object.keys(domains);
+  var snapshot = await db.collection('users').doc('user_0').get()
 
-    var totalTime = 0;
-    var prodTime = 0;
+  var domains = snapshot.data()["domains"];
 
-    keys.forEach(key => {
-      var currTime = domains[key]["time"];
-      if (domains[key]["productive"]) {
-        prodTime += currTime;
-      }
-      totalTime += currTime;
-    })
-    console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
-    console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
-    
-    if (totalTime == 0) return -1; // cannot divide by zero, return error
+  var keys = Object.keys(domains);
 
-    return (prodTime / totalTime) * 100;
+  var totalTime = 0;
+  var prodTime = 0;
+
+  keys.forEach(key => {
+    var currTime = domains[key]["time"];
+    if (domains[key]["productive"]) {
+      prodTime += currTime;
+    }
+    totalTime += currTime;
   })
-  return -1; // something went wrong, return error
+  console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
+  console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
+
+  if (totalTime == 0) return -1; // cannot divide by zero, return error
+
+  return (prodTime / totalTime) * 100;
 }
 
 
@@ -183,7 +186,7 @@ const formatDuration = (d) => {
 const tick = () => {
   if (curPage.begin === undefined)
     return;
-  
+
   if (map.has(curPage.domain)){
     const timeSinceBegin = formatDuration(new Date() - curPage.begin + map.get(curPage.domain));
     chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
@@ -210,8 +213,13 @@ const updateDatabaseWithDomainTimes = () =>{
   }
 
   curPage.begin = currTime; // reset start time for current active domain
-  domainsToUpdate.forEach((domain, increment, map) => {
-    incrementDomainActivity(domain, increment);
+  console.log(domainsToUpdate)
+  domainsToUpdate.forEach((increment, domain, map) => {
+    // convert to seconds
+    console.log("DOM " + domain)
+    //TODO figure out why domain is undefined
+    if (domain === undefined) return;
+    incrementDomainActivity(domain, Math.floor(increment / 1000));
   });
   domainsToUpdate = new Map(); // clear list
 };
@@ -232,14 +240,14 @@ const handleUpdate = (tabId, changeInfo, tab) => {
   if (url === "undefined" || url == null){
     return;
   }
-  
+
   let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
   let domain = matches && matches[1];
 
   if (curPage.domain === domain){
     return;
   }
-  
+
   var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
   cleanDomain = urlParts[0];
   addURL(cleanDomain);
@@ -251,8 +259,10 @@ const handleUpdate = (tabId, changeInfo, tab) => {
 const handleChangeTab = (obj) => {
   chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
     let url = tabs[0].url;
-    let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-    let domain = matches && matches[1];
+    //  let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+    //  let domain = matches && matches[1];
+    var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+    domain = urlParts[0];
     updatecurPage(domain, tabs[0].id);
   });
 };
@@ -270,7 +280,7 @@ const updatecurPage = (domain, tabId) => {
     } else {
       map.set(curPage.domain, (currTime - curPage.begin));
     }
-    
+
     if (domainsToUpdate.has(curPage.domain)){
       const oldTime = map.get(curPage.domain);
       domainsToUpdate.set(curPage.domain, oldTime + (currTime- curPage.begin));
@@ -288,12 +298,8 @@ const updatecurPage = (domain, tabId) => {
 // connects background.js to popup.js
 chrome.extension.onConnect.addListener(function(port) {
   port.onMessage.addListener(function(msg) {
-       console.log("background message recieved " + msg);
-       if (msg === "get productivity score"){
-         port.postMessage({score: getProductivity()});
-       } else {
-        port.postMessage({domain: curPage.domain});
-       }
+    console.log("background message recieved " + msg);
+    port.postMessage(curPage.domain);
   });
 });
 
@@ -316,15 +322,22 @@ function addURL(domain) {
   })
 }
 
+// update the productivity periodically
+const handleProductivity = async () => {
+  const newProd = await getProductivity();
+  console.log("NEW PROD " + newProd);
+  chrome.storage.sync.set({productivity: newProd})
+}
+
 
 /*
  * Other initializations
  */
 
 
-setInterval(tick, 1000);
 // updates database every minute; only reduce time for testing as there will be many writes
-setInterval(updateDatabaseWithDomainTimes, 60000);
+setInterval(handleProductivity, 3000);
+setInterval(updateDatabaseWithDomainTimes, 5000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
 chrome.tabs.onActivated.addListener(handleChangeTab);
 
