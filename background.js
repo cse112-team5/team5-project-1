@@ -289,7 +289,11 @@ const updatecurPage = (domain, tabId) => {
 chrome.extension.onConnect.addListener(function(port) {
   port.onMessage.addListener(function(msg) {
        console.log("background message recieved " + msg);
-       port.postMessage(curPage.domain);
+       if (msg === "get productivity score"){
+         port.postMessage({score: getProductivity()});
+       } else {
+        port.postMessage({domain: curPage.domain});
+       }
   });
 });
 
