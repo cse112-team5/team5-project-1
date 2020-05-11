@@ -1,12 +1,11 @@
 var config = {
-  apiKey: "TODO",
-  authDomain: "TODO",
-  databaseURL: "TODO",
-  projectId: "TODO",
-  storageBucket: "TODO",
-  messagingSenderId: "TODO",
-  appId: "TODO",
-  measurementId: "TODO"
+  apiKey: "AIzaSyCOhTt25qhJtQyWSEUFCU3s_ZE9EC3EiGs",
+  authDomain: "cse112-sp20.firebaseapp.com",
+  databaseURL: "https://cse112-sp20.firebaseio.com",
+  projectId: "cse112-sp20",
+  storageBucket: "cse112-sp20.appspot.com",
+  messagingSenderId: "861300546651",
+  appId: "1:861300546651:web:93eb90114a9f3e6df1737e"
 };
 
 
@@ -34,7 +33,7 @@ firebase.initializeApp(config);
  * return
  *      0 upon success, 1 otherwise
  */
-const updateDomainProductive = (domain, val) => {
+function updateDomainProductive(domain, val) {
   if (domain.length == 0) return -1;
 
   const db = firebase.firestore();
@@ -45,12 +44,12 @@ const updateDomainProductive = (domain, val) => {
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
     
-    if (domain in domains) {
-      vis = domains[domain]["visits"];
-      tim = domains[domain]["time"]; 
-      prod = domains[domain]["productive"]; 
+    if (!(domain in domains)) {
+      return 1;  // couldn't find the domain
     }
-    else return 1;  // couldn't find the domain
+    vis = domains[domain]["visits"];
+    tim = domains[domain]["time"]; 
+    prod = domains[domain]["productive"]; 
 
     var sitesList = snapshot.data();
     
