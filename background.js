@@ -163,7 +163,11 @@ const getProductivity = () => {
  */
 
 var curPage = {};
-
+var map = new Map();
+var domainsToUpdate = new Map();
+var views = chrome.extension.getViews({
+  type: "popup"
+});
 
 const formatDuration = (d) => {
   if (d < 0) {
@@ -179,9 +183,37 @@ const formatDuration = (d) => {
 const tick = () => {
   if (curPage.begin === undefined)
     return;
+  
+  if (map.has(curPage.domain)){
+    const timeSinceBegin = formatDuration(new Date() - curPage.begin + map.get(curPage.domain));
+    chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
+  } else {
+    const timeSinceBegin = formatDuration(new Date() - curPage.begin);
+    chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
+  }
+};
 
-  const timeSinceBegin = formatDuration(new Date() - curPage.begin);
-  chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin });
+const updateDatabaseWithDomainTimes = () =>{
+  const currTime = new Date();
+  if (map.has(curPage.domain)){
+    const oldTime = map.get(curPage.domain);
+    map.set(curPage.domain, oldTime + (currTime- curPage.begin));
+  } else {
+    map.set(curPage.domain, (currTime - curPage.begin));
+  }
+
+  if (domainsToUpdate.has(curPage.domain)){
+    const oldTime = domainsToUpdate.get(curPage.domain);
+    domainsToUpdate.set(curPage.domain, oldTime + (currTime- curPage.begin));
+  } else {
+    domainsToUpdate.set(curPage.domain, (currTime - curPage.begin));
+  }
+
+  curPage.begin = currTime; // reset start time for current active domain
+  domainsToUpdate.forEach((domain, increment, map) => {
+    incrementDomainActivity(domain, increment);
+  });
+  domainsToUpdate = new Map(); // clear list
 };
 
 async function getDomains() {
@@ -193,22 +225,73 @@ async function getDomains() {
   return userData.data();
 }
 
+// handles change in url for a tab
 const handleUpdate = (tabId, changeInfo, tab) => {
+  const url = changeInfo.url;
 
-  const domain = changeInfo.url;
-  if (domain === undefined)
+  if (url === "undefined" || url == null){
     return;
-  if (curPage.domain === domain)
+  }
+  
+  let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+  let domain = matches && matches[1];
+
+  if (curPage.domain === domain){
     return;
-
-  curPage.domain = domain;
-  curPage.begin = new Date();
-  curPage.tabId = tabId;
-
-  var urlParts = domain.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+  }
+  
+  var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
   cleanDomain = urlParts[0];
   addURL(cleanDomain);
+
+  updatecurPage(domain, tabId);
 };
+
+// handles when a user changes active tab
+const handleChangeTab = (obj) => {
+  chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
+    let url = tabs[0].url;
+    let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+    let domain = matches && matches[1];
+    updatecurPage(domain, tabs[0].id);
+  });
+};
+
+// updates curPage details and map of times
+const updatecurPage = (domain, tabId) => {
+
+  const currTime = new Date();
+
+  // update dictionary
+  if (curPage.domain){
+    if (map.has(curPage.domain)){
+      const oldTime = map.get(curPage.domain);
+      map.set(curPage.domain, oldTime + (currTime- curPage.begin));
+    } else {
+      map.set(curPage.domain, (currTime - curPage.begin));
+    }
+    
+    if (domainsToUpdate.has(curPage.domain)){
+      const oldTime = map.get(curPage.domain);
+      domainsToUpdate.set(curPage.domain, oldTime + (currTime- curPage.begin));
+    } else {
+      domainsToUpdate.set(curPage.domain, (currTime - curPage.begin));
+    }
+  }
+
+  // update curPage
+  curPage.domain = domain;
+  curPage.begin = new Date(); 
+  curPage.tabId = parseInt(tabId);
+}
+
+// connects background.js to popup.js
+chrome.extension.onConnect.addListener(function(port) {
+  port.onMessage.addListener(function(msg) {
+       console.log("background message recieved " + msg);
+       port.postMessage(curPage.domain);
+  });
+});
 
 function addURL(domain) {
   sitesList = getDomains();
@@ -230,16 +313,17 @@ function addURL(domain) {
 }
 
 
-
-
-
 /*
  * Other initializations
  */
 
 
 setInterval(tick, 1000);
+// updates database every minute; only reduce time for testing as there will be many writes
+setInterval(updateDatabaseWithDomainTimes, 60000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
+chrome.tabs.onActivated.addListener(handleChangeTab);
+
 
 window.onload = function () {
   initApp();
