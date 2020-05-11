@@ -23,8 +23,17 @@ async function getDomains() {
   return userData.data();
 }
 
-const updateProductivity = (score) => {
-  document.getElementById('p_score').innerHTML = score + "%";
+const updateProductivity = () => {
+  //TODO calculate productivity with an API instead of dummy values
+  chrome.storage.sync.get('productivity', (data) => {
+    console.log(data);
+    if (Object.keys(data).length === 0 || data.productivity < 0) {
+      document.getElementById('p_score').innerHTML = "N/A";
+    }
+    else {
+      document.getElementById('p_score').innerHTML = data.productivity + "%";
+    }
+  })
 }
 //connects popup.js to background.js
 var port = chrome.extension.connect({
@@ -33,27 +42,21 @@ var port = chrome.extension.connect({
 
 // loads domain from background.js if we get one, otherwise does a backup query
 port.onMessage.addListener(function(msg) {
-  
-  if (msg.score){
-    updateProductivity(msg.score);
-  } else {
-    // do backup query if msg was null
-    if(msg == null){
-      chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
-        let url = tabs[0].url;
-        // regex to split url from domain
-        let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-        let domain = matches && matches[1];
-        this.document.getElementById('domain').innerHTML = domain;
-      });
-    }
-    else{
-      let domain = msg.domain;
-      console.log("message:" + domain);
-      //let matches = msg.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-      //let domain = matches && matches[1];
+  console.log("message:" +msg);
+  // do backup query if msg was null
+  if(msg == null){
+    chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
+      let url = tabs[0].url;
+      // regex to split url from domain
+      let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+      let domain = matches && matches[1];
       this.document.getElementById('domain').innerHTML = domain;
-    }
+    });
+  }
+  else{
+    //let matches = msg.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+    //let domain = matches && matches[1];
+    this.document.getElementById('domain').innerHTML = msg;
   }
 }); 
 
@@ -86,6 +89,7 @@ function updateSites(sitesList) {
 
 chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 window.onload = function() {
+  getDomains();
   port.postMessage("load domain");
-  port.postMessage("get productivity score");
+  updateProductivity();
 };
