@@ -1,15 +1,3 @@
-var config = {
-  apiKey: "TODO",
-  authDomain: "TODO",
-  databaseURL: "TODO",
-  projectId: "TODO",
-  storageBucket: "TODO",
-  messagingSenderId: "TODO",
-  appId: "TODO"
-};
-
-firebase.initializeApp(config);
-
 function compareTime(a, b) {
   return b[1].time - a[1].time;
 }
