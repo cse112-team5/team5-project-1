@@ -2,7 +2,7 @@
   "name": "Phantime",
   "version": "1.0",
   "description": "A productivity tracker extension",
-  "permissions": ["tabs"],
+  "permissions": ["storage", "tabs"],
   "background": {
     "page": "background.html"
   },

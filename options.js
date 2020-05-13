@@ -9,6 +9,7 @@ var config = {
   measurementId: "TODO"
 };
 
+
 firebase.initializeApp(config);
 
 /*
@@ -30,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 /*
- *
  * Updates the 'productive' flag for the domain for the user
  *
  * paremeters:
