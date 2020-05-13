@@ -1,33 +1,4 @@
 /*
- * Firebase initializations
- */
-
-
-// TODO(DEVELOPER): Change the values below using values from the initialization snippet: Firebase Console > Overview > Add Firebase to your web app.
-// Initialize Firebase
-var config = {
-  apiKey: "TODO",
-  authDomain: "TODO",
-  databaseURL: "TODO",
-  projectId: "TODO",
-  storageBucket: "TODO",
-  messagingSenderId: "TODO",
-  appId: "TODO"
-};
-
-firebase.initializeApp(config);
-
-const initApp = () => {
-  // Listen for auth state changes.
-  // TODO: we'll implement this later when we startw working on user auth
-  firebase.auth().onAuthStateChanged(function (user) {
-    console.log('User state change detected from the Background script of the Chrome Extension:', user);
-  });
-}
-
-
-
-/*
  * Firebase communcation API
  */
 
@@ -66,7 +37,7 @@ const incrementDomainActivity = (domain, increment) => {
       prod = domains[domain]["productive"]; 
     }
     else {
-      vis = 1;
+      vis = 0;
       tim = 0;
       prod = true;
     }
@@ -106,7 +77,11 @@ const incrementDomainVisits = (domain) => {
       tim = domains[domain]["time"]; 
       prod = domains[domain]["productive"]; 
     }
-    else return 1;  // couldn't find the domain
+    else {
+      vis = 1;
+      tim = 0;
+      prod = true;
+    }
 
     var sitesList = snapshot.data();
 
@@ -218,7 +193,7 @@ const updateDatabaseWithDomainTimes = () =>{
     // convert to seconds
     console.log("DOM " + domain)
     //TODO figure out why domain is undefined
-    if (domain === undefined) return;
+    if (domain === undefined || domain === null) return;
     incrementDomainActivity(domain, Math.floor(increment / 1000));
   });
   domainsToUpdate = new Map(); // clear list

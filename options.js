@@ -1,17 +1,3 @@
-var config = {
-  apiKey: "TODO",
-  authDomain: "TODO",
-  databaseURL: "TODO",
-  projectId: "TODO",
-  storageBucket: "TODO",
-  messagingSenderId: "TODO",
-  appId: "TODO",
-  measurementId: "TODO"
-};
-
-
-firebase.initializeApp(config);
-
 /*
  * Firebase communcation API
  */
@@ -38,22 +24,26 @@ const updateDomainProductive = (domain, val) => {
   if (domain.length == 0) return -1;
 
   const db = firebase.firestore();
-  
+
   var vis = -1;
   var tim = 0;
   var prod = false;
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
-    
+
     if (domain in domains) {
       vis = domains[domain]["visits"];
-      tim = domains[domain]["time"]; 
-      prod = domains[domain]["productive"]; 
+      tim = domains[domain]["time"];
+      prod = domains[domain]["productive"];
     }
-    else return 1;  // couldn't find the domain
+    else {
+      vis = 0;
+      tim = 0;
+      prod = true;
+    }
 
     var sitesList = snapshot.data();
-    
+
     var userRef = db.collection("users").doc("user_0");
     console.log("making productivity = " + val + " for " + domain);
     sitesList["domains"][domain] = { time: tim, productive: val, visits: vis };
