@@ -37,7 +37,7 @@ const incrementDomainActivity = (domain, increment) => {
       prod = domains[domain]["productive"]; 
     }
     else {
-      vis = 1;
+      vis = 0;
       tim = 0;
       prod = true;
     }
