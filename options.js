@@ -1,17 +1,3 @@
-var config = {
-  apiKey: "TODO",
-  authDomain: "TODO",
-  databaseURL: "TODO",
-  projectId: "TODO",
-  storageBucket: "TODO",
-  messagingSenderId: "TODO",
-  appId: "TODO",
-  measurementId: "TODO"
-};
-
-
-firebase.initializeApp(config);
-
 /*
  * Firebase communcation API
  */
