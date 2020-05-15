@@ -1,4 +1,17 @@
 /*
+ * Firebase response handlers
+ */
+
+
+function initApp() {
+  // Listen for auth state changes.
+  firebase.auth().onAuthStateChanged(function(user) {
+    console.log('User state change detected from the Background script of the Chrome Extension:', user);
+  });
+}
+
+
+/*
  * Firebase communcation API
  */
 
@@ -28,6 +41,15 @@ const incrementDomainActivity = (domain, increment) => {
   var vis = -1;
   var tim = 0;
   var prod = false;
+
+  // TODO (Madhav, Xianhai) 
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
 
@@ -69,6 +91,14 @@ const incrementDomainVisits = (domain) => {
   var vis = -1;
   var tim = 0;
   var prod = false;
+  // TODO (Madhav, Xianhai) 
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
 
@@ -110,6 +140,14 @@ const incrementDomainVisits = (domain) => {
 const getProductivity = async () => {
   const db = firebase.firestore();
 
+  // TODO (Madhav, Xianhai) 
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   var snapshot = await db.collection('users').doc('user_0').get()
 
   var domains = snapshot.data()["domains"];
@@ -201,6 +239,14 @@ const updateDatabaseWithDomainTimes = () =>{
 
 async function getDomains() {
   const db = firebase.firestore();
+  // TODO (Madhav, Xianhai) 
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   const user = db.collection('users').doc('user_0');
 
   userData = await user.get();
@@ -286,6 +332,14 @@ function addURL(domain) {
 
     if (!tempMap.has(domain)) {
       const db = firebase.firestore();
+  // TODO (Madhav, Xianhai) 
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
       var userRef = db.collection("users").doc("user_0");
       var domainString = "domains." + domain;
       sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
@@ -303,7 +357,6 @@ const handleProductivity = async () => {
   console.log("NEW PROD " + newProd);
   chrome.storage.sync.set({productivity: newProd})
 }
-
 
 /*
  * Other initializations
