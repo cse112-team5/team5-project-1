@@ -4,7 +4,7 @@ env:
   node: true                                                                    
                                                                                 
 parserOptions:                                                                  
-  ecmaVersion: 7                                                                
+  ecmaVersion: 2017  
                                                                                 
 rules:                                                                          
   eol-last: error                                                               
