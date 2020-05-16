@@ -1,29 +1,63 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <style>
-body {
-  width: 450px;
-  height:450px;
-}
-    </style>
-    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
-    <script src="config.js"></script>
-    <script src="popup.js"></script>
-  </head>
-  <body>
-    <h1>Phantime</h1>
-    <div>
-      <h2>Productivity</h2>
-      <p id="p_score"></p>
+
+<head>
+  <style>
+    
+    body {
+      width: 450px;
+      height: 450px;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/ui/4.5.0/firebase-ui-auth.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.5.0/firebase-ui-auth.css" />
+  <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</head>
+
+<body>
+  <h1>Phantime</h1>
+  <div>
+    <h2>Productivity</h2>
+    <p id="p_score"></p>
+  </div>
+  <div>
+    <h2>You are currently on</h2>
+    <p id="domain"></p>
+  </div>
+  <div>
+    <h2 id="topsites"></h2>
+    <p id="sitesList"></p>
+  </div>
+  <div>
+    <div id="team-formation">
+      <div>
+        <form id="selection">
+          <label for="new_team_name">Team name:</label><br>
+          <input type="text" id="new_team_name" name="new_team_name"><br>
+        </form>
+        <button id="newTeam">
+          Create team
+        </button>
+      </div>
+      <div>
+        <form id="joinTeamForm">
+          <label for="invite_code">Invite Code:</label><br>
+          <input type="text" id="invite_code" name="invite_code"><br>
+        </form>
+        <button id="joinTeam">
+          Join team
+        </button>
+      </div>
     </div>
     <div>
-      <h2>You are currently on</h2>
-      <p id="domain"></p>
+      <p id="invite_code_displayed"></p>
     </div>
-    <div>
-      <h2 id="topsites"></h2>
-      <p id="sitesList"></p>
-    </div>
-  </body>
+  </div>
+  <div id="firebaseui-auth-container"></div>
+  <p id="result-email"></p>
+  <p id="result-uid"></p>
+</body>
+
 </html>
