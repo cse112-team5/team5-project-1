@@ -1,0 +1,15 @@
+{
+  "name": "team5-project",
+  "version": "0.0.01",
+  "description": "A productivity tracker Chrome extension",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cse112-sp20/team5-project"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
+  }
+}
