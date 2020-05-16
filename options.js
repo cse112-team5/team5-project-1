@@ -28,6 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function updateDomainProductive(domain, val) {
   const db = firebase.firestore();
+  // TODO (Madhav, Xianhai) 
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   const user = db.collection("users").doc("user_0");
   domain = document.getElementById('unproductive_domain').value;
   val = getRadioVal( document.getElementById('selection'), 'if' );
