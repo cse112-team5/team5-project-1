@@ -2,10 +2,6 @@
  * Firebase initializations
  */
 
-<<<<<<< HEAD
-=======
-var signedIn = false;
->>>>>>> c00944e... added team functionality and filtered links in options
 
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
@@ -45,12 +41,9 @@ const uiConfig = {
                 })
                 .then((invCode) =>{
                   console.log("invCode: " + invCode);
-                  document.getElementById('invite_code_displayed').innerHTML = "Team invite code: " + invCode;
+                  showInviteCode(invCode);
                   chrome.storage.sync.set({"invCode": invite_code});
-<<<<<<< HEAD
                   removeTeamFormation();
-=======
->>>>>>> c00944e... added team functionality and filtered links in options
                 })
                 .catch((error)=>{
                   console.error("Error getting document: ", error);
@@ -58,11 +51,7 @@ const uiConfig = {
             })
             .catch(function (error) {
               // The document probably doesn't exist.
-<<<<<<< HEAD
-              console.error("User has no team");
-=======
-              console.error("Error getting document: ", error);
->>>>>>> c00944e... added team functionality and filtered links in options
+              console.log("User has no team");
             });
         }
       });
@@ -83,11 +72,7 @@ const uiConfig = {
     },
   ]
 }
-<<<<<<< HEAD
 ui.start('#firebaseui-auth-container', uiConfig);
-=======
-
->>>>>>> c00944e... added team functionality and filtered links in options
 
 /*
  * Client side functions
@@ -243,55 +228,122 @@ function joinTeam(invite_code) {
         console.error("Error updating document: ", error);
       });
       chrome.storage.sync.set({"invCode": invite_code});
-      document.getElementById('invite_code_displayed').innerHTML = "Team invite code: " + invite_code;
+      showInviteCode(invite_code);
       removeTeamFormation();
+    });
+  }
+}
+
+function leaveTeam(){
+  const db = firebase.firestore();
+  var user = firebase.auth().currentUser;
+
+  if (user){
+    db.collection("users").doc(user.uid).get()
+    .then((userRef)=>{
+      let data = userRef.data();
+      let teamId = data.teamId;
+      data.teamId = null;
+      db.collection("users").doc(user.uid).set(data);
+      return teamId;
+    })
+    .then((teamId)=>{
+      return db.collection("teams").doc(teamId).get();
+    })
+    .then((teamRef)=>{
+      let data = teamRef.data();
+      let userIndex = data.members.indexOf(user.uid);
+      data.members.splice(userIndex, 1);
+      db.collection("teams").doc(teamRef.id).set(data);
+    })
+    .then(()=>{
+      chrome.storage.sync.remove("invCode");
+      let disp = document.getElementById('invite_code_displayed');
+      disp.innerHTML = "";
+      disp.parentNode.removeChild(disp.nextElementSibling);
+      addTeamFormation();
+    })
+    .catch((err)=>{
+      console.error("Error leaving team: ", err);
     });
   }
 }
 
 chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 
+function joinTeamHandler() {
+  const invite_code = document.getElementById("invite_code").value;
+  if (invite_code.length !== 20) {
+    return;
+  }
+  joinTeam(invite_code);
+}
+
+function createTeamHandler() {
+  teamName = document.getElementById('new_team_name').value;
+  createTeam(teamName);
+}
+
+function leaveTeamHandler(){
+  leaveTeam();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   var newTeam = document.getElementById('newTeam');
   // onClick's logic below:
-  newTeam.addEventListener('click', function () {
-    teamName = document.getElementById('new_team_name').value;
-    createTeam(teamName);
-
-  });
+  newTeam.addEventListener('click', createTeamHandler);
 
   var joinTeamButton = document.getElementById('joinTeam');
-  joinTeamButton.addEventListener('click', function () {
-    const invite_code = document.getElementById("invite_code").value;
-    if (invite_code.length !== 20) {
-      return;
-    }
-    joinTeam(invite_code);
-
-  });
+  joinTeamButton.addEventListener('click', joinTeamHandler);
 });
 
+function showInviteCode(invite_code){
+  document.getElementById('invite_code_displayed').innerHTML = "Team invite code: " + invite_code;
+  let leaveTeamButton = document.createElement("button");
+  leaveTeamButton.id = "leaveTeamButton";
+  leaveTeamButton.innerHTML = "Leave Team";
+  leaveTeamButton.addEventListener("click", leaveTeamHandler);
+  document.getElementById('invite_code_displayed').parentNode.appendChild(leaveTeamButton);
+}
+
 function removeTeamFormation() {
+  // remove event listeners
+  let createTeamButton = document.getElementById("newTeam");
+  createTeamButton.removeEventListener("click", createTeamHandler);
+  let joinTeamButton = document.getElementById("joinTeam");
+  joinTeamButton.removeEventListener("click", joinTeamHandler);
+
+  // remove elements
   let elem = document.getElementById("team-formation");
-  elem.parentNode.removeChild(elem);
+  elem.innerHTML = '';
+}
+
+function addTeamFormation(){
+  let elem = document.getElementById("team-formation");
+  elem.innerHTML = 
+  "<div>"+
+    "<form id=\"selection\">"+
+      "<label for=\"new_team_name\">Team name:</label><br>" +
+      "<input type=\"text\" id=\"new_team_name\" name=\"new_team_name\"\><br>"+
+    "</form>" +
+    "<button id=\"newTeam\">Create team</button>" +
+  "</div>" +
+  "<div>" +
+    "<form id=\"joinTeamForm\">" +
+      "<label for=\"invite_code\">Invite Code:</label><br>" +
+      "<input type=\"text\" id=\"invite_code\" name=\"invite_code\"><br>" +
+    "</form>" + 
+    "<button id=\"joinTeam\">Join team</button>" + 
+  "</div>";
+
+  document.getElementById("newTeam").addEventListener("click", createTeamHandler);
+  document.getElementById("joinTeam").addEventListener("click", joinTeamHandler);
+  
 }
 
 
 window.onload = function () {
-<<<<<<< HEAD
   getDomains();
   port.postMessage("load domain");
   updateProductivity();
-=======
-  if (!signedIn) {
-    let res = ui.start('#firebaseui-auth-container', uiConfig);
-    console.log("signIn res: " + res);
-    signedIn = res;
-  } else {
-    createTeam("helloworldtest");
-    getDomains();
-    port.postMessage("load domain");
-    updateProductivity();
-  }
->>>>>>> c00944e... added team functionality and filtered links in options
 };
