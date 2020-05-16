@@ -2,6 +2,10 @@
  * Firebase initializations
  */
 
+<<<<<<< HEAD
+=======
+var signedIn = false;
+>>>>>>> c00944e... added team functionality and filtered links in options
 
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
@@ -43,7 +47,10 @@ const uiConfig = {
                   console.log("invCode: " + invCode);
                   document.getElementById('invite_code_displayed').innerHTML = "Team invite code: " + invCode;
                   chrome.storage.sync.set({"invCode": invite_code});
+<<<<<<< HEAD
                   removeTeamFormation();
+=======
+>>>>>>> c00944e... added team functionality and filtered links in options
                 })
                 .catch((error)=>{
                   console.error("Error getting document: ", error);
@@ -51,7 +58,11 @@ const uiConfig = {
             })
             .catch(function (error) {
               // The document probably doesn't exist.
+<<<<<<< HEAD
               console.error("User has no team");
+=======
+              console.error("Error getting document: ", error);
+>>>>>>> c00944e... added team functionality and filtered links in options
             });
         }
       });
@@ -72,7 +83,11 @@ const uiConfig = {
     },
   ]
 }
+<<<<<<< HEAD
 ui.start('#firebaseui-auth-container', uiConfig);
+=======
+
+>>>>>>> c00944e... added team functionality and filtered links in options
 
 /*
  * Client side functions
@@ -263,7 +278,20 @@ function removeTeamFormation() {
 
 
 window.onload = function () {
+<<<<<<< HEAD
   getDomains();
   port.postMessage("load domain");
   updateProductivity();
+=======
+  if (!signedIn) {
+    let res = ui.start('#firebaseui-auth-container', uiConfig);
+    console.log("signIn res: " + res);
+    signedIn = res;
+  } else {
+    createTeam("helloworldtest");
+    getDomains();
+    port.postMessage("load domain");
+    updateProductivity();
+  }
+>>>>>>> c00944e... added team functionality and filtered links in options
 };
