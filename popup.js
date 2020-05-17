@@ -37,7 +37,7 @@ const uiConfig = {
       authMethod: 'https://accounts.google.com',
     },
   ]
-}
+};
 
 ui.start('#firebaseui-auth-container', uiConfig);
 
@@ -53,7 +53,7 @@ function compareTime(a, b) {
 
 async function getDomains() {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -78,8 +78,8 @@ const updateProductivity = () => {
     else {
       document.getElementById('p_score').innerHTML = data.productivity + "%";
     }
-  })
-}
+  });
+};
 //connects popup.js to background.js
 var port = chrome.extension.connect({
   name: "Sample Communication"
@@ -103,7 +103,7 @@ port.onMessage.addListener(function(msg) {
     //let domain = matches && matches[1];
     this.document.getElementById('domain').innerHTML = msg;
   }
-}); 
+});
 
 function sortDomains(data) {
   tempMap = new Map(Object.entries(data["domains"]));
@@ -116,7 +116,7 @@ function updateSites(sitesList) {
 
     console.log(sortedDomains);
 
-    var MAX_SITES = 5
+    var MAX_SITES = 5;
     var numSites = sortedDomains.length < MAX_SITES ? sortedDomains.length : MAX_SITES;
 
     var list = document.createElement('ol');
