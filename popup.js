@@ -219,13 +219,13 @@ function joinTeam(invite_code) {
       db.collection("users").doc(user.uid).update({
         teamId: docSnap.id
       })
-      .then(function () {
-        console.log("Document successfully updated!");
-      })
-      .catch(function (error) {
-        // The document probably doesn't exist.
-        console.error("Error updating document: ", error);
-      });
+        .then(function () {
+          console.log("Document successfully updated!");
+        })
+        .catch(function (error) {
+          // The document probably doesn't exist.
+          console.error("Error updating document: ", error);
+        });
       chrome.storage.sync.set({"invCode": invite_code});
       showInviteCode(invite_code);
       removeTeamFormation();
@@ -239,32 +239,32 @@ function leaveTeam(){
 
   if (user){
     db.collection("users").doc(user.uid).get()
-    .then((userRef)=>{
-      let data = userRef.data();
-      let teamId = data.teamId;
-      data.teamId = null;
-      db.collection("users").doc(user.uid).set(data);
-      return teamId;
-    })
-    .then((teamId)=>{
-      return db.collection("teams").doc(teamId).get();
-    })
-    .then((teamRef)=>{
-      let data = teamRef.data();
-      let userIndex = data.members.indexOf(user.uid);
-      data.members.splice(userIndex, 1);
-      db.collection("teams").doc(teamRef.id).set(data);
-    })
-    .then(()=>{
-      chrome.storage.sync.remove("invCode");
-      let disp = document.getElementById('invite_code_displayed');
-      disp.innerHTML = "";
-      disp.parentNode.removeChild(disp.nextElementSibling);
-      addTeamFormation();
-    })
-    .catch((err)=>{
-      console.error("Error leaving team: ", err);
-    });
+      .then((userRef)=>{
+        let data = userRef.data();
+        let teamId = data.teamId;
+        data.teamId = null;
+        db.collection("users").doc(user.uid).set(data);
+        return teamId;
+      })
+      .then((teamId)=>{
+        return db.collection("teams").doc(teamId).get();
+      })
+      .then((teamRef)=>{
+        let data = teamRef.data();
+        let userIndex = data.members.indexOf(user.uid);
+        data.members.splice(userIndex, 1);
+        db.collection("teams").doc(teamRef.id).set(data);
+      })
+      .then(()=>{
+        chrome.storage.sync.remove("invCode");
+        let disp = document.getElementById('invite_code_displayed');
+        disp.innerHTML = "";
+        disp.parentNode.removeChild(disp.nextElementSibling);
+        addTeamFormation();
+      })
+      .catch((err)=>{
+        console.error("Error leaving team: ", err);
+      });
   }
 }
 
@@ -331,13 +331,13 @@ function addTeamFormation(){
     "<form id=\"joinTeamForm\">" +
       "<label for=\"invite_code\">Invite Code:</label><br>" +
       "<input type=\"text\" id=\"invite_code\" name=\"invite_code\"><br>" +
-    "</form>" + 
-    "<button id=\"joinTeam\">Join team</button>" + 
+    "</form>" +
+    "<button id=\"joinTeam\">Join team</button>" +
   "</div>";
 
   document.getElementById("newTeam").addEventListener("click", createTeamHandler);
   document.getElementById("joinTeam").addEventListener("click", joinTeamHandler);
-  
+
 }
 
 
