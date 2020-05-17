@@ -1,9 +1,66 @@
+/*
+ * Firebase initializations
+ */
+
+
+
+var ui = new firebaseui.auth.AuthUI(firebase.auth());
+
+// TODO Madhav, Xianhai
+// update this config to make sure all outcomes are handles
+// - successful login
+// - account creation
+// - incorrect credentials
+// - invalid parameters (blank email/pass)
+const uiConfig = {
+  callbacks: {
+    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+      // User successfully signed in.
+      // Return type determines whether we continue the redirect automatically
+      // or whether we leave that to developer to handle.
+      console.log(authResult);
+      document.getElementById('firebaseui-auth-container').style.display = 'none';
+      document.getElementById('result-email').innerHTML = "Logged in as: " + authResult.user.email;
+      document.getElementById('result-uid').innerHTML = "uid: " + authResult.user.uid;
+      return true;
+    },
+  },
+
+  signInFlow: 'popup',
+
+  signInOptions: [
+    {
+      provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+    },
+    {
+      provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      authMethod: 'https://accounts.google.com',
+    },
+  ]
+}
+
+ui.start('#firebaseui-auth-container', uiConfig);
+
+
+/*
+ * Client side functions
+ */
+
+
 function compareTime(a, b) {
   return b[1].time - a[1].time;
 }
 
 async function getDomains() {
   const db = firebase.firestore();
+  // TODO (Madhav, Xianhai) 
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   const user = db.collection('users').doc('user_0');
 
   userData = await user.get();
