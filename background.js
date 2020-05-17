@@ -1,4 +1,17 @@
 /*
+ * Firebase response handlers
+ */
+
+
+function initApp() {
+  // Listen for auth state changes.
+  firebase.auth().onAuthStateChanged(function(user) {
+    console.log('User state change detected from the Background script of the Chrome Extension:', user);
+  });
+}
+
+
+/*
  * Firebase communcation API
  */
 
@@ -36,13 +49,22 @@ const incrementDomainActivity = (domain, increment) => {
   var vis = -1;
   var tim = 0;
   var prod = false;
+
+  // TODO (Madhav, Xianhai)
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
 
     if (domain in domains) {
       vis = domains[domain]["visits"];
-      tim = domains[domain]["time"]; 
-      prod = domains[domain]["productive"]; 
+      tim = domains[domain]["time"];
+      prod = domains[domain]["productive"];
     }
     else {
       vis = 0;
@@ -57,8 +79,8 @@ const incrementDomainActivity = (domain, increment) => {
     sitesList["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
     userRef.set(sitesList);
     return 0;
-  })
-}
+  });
+};
 
 /*
  * Increments the number of visites on a domain for the user by one
@@ -77,13 +99,21 @@ const incrementDomainVisits = (domain) => {
   var vis = -1;
   var tim = 0;
   var prod = false;
+  // TODO (Madhav, Xianhai)
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   db.collection('users').doc('user_0').get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
 
     if (domain in domains) {
       vis = domains[domain]["visits"];
-      tim = domains[domain]["time"]; 
-      prod = domains[domain]["productive"]; 
+      tim = domains[domain]["time"];
+      prod = domains[domain]["productive"];
     }
     else {
       vis = 1;
@@ -98,15 +128,15 @@ const incrementDomainVisits = (domain) => {
     sitesList["domains"][domain] = { time: tim, productive: prod, visits: vis + 1 };
     userRef.set(sitesList);
     return 0;
-  })
-}
+  });
+};
 
 /*
  * Calculates the productivity score of the user
  *
  * To calculate the productivity score, first retreive the domain map from
  * Firebase. Then, divide the total time spend on productive sites by the
- * total time spent. If the denominator is 0, return -1. Else return a the 
+ * total time spent. If the denominator is 0, return -1. Else return a the
  * score as a percentage float between 0 - 100
  *
  * paremeters:
@@ -118,7 +148,16 @@ const incrementDomainVisits = (domain) => {
 const getProductivity = async () => {
   const db = firebase.firestore();
 
-  var snapshot = await db.collection('users').doc('user_0').get()
+  // TODO (Madhav, Xianhai)
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
+  var snapshot = await db.collection('users').doc('user_0').get();
+
 
   var domains = snapshot.data()["domains"];
 
@@ -133,14 +172,14 @@ const getProductivity = async () => {
       prodTime += currTime;
     }
     totalTime += currTime;
-  })
+  });
   console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
   console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
 
   if (totalTime == 0) return -1; // cannot divide by zero, return error
 
   return (prodTime / totalTime) * 100;
-}
+};
 
 
 
@@ -151,9 +190,9 @@ const getProductivity = async () => {
 var curPage = {};
 var map = new Map();
 var domainsToUpdate = new Map();
-var views = chrome.extension.getViews({
-  type: "popup"
-});
+// var views = chrome.extension.getViews({
+//   type: "popup"
+// });
 
 const formatDuration = (d) => {
   if (d < 0) {
@@ -164,7 +203,7 @@ const formatDuration = (d) => {
     return x < 10 ? "0" + x : x;
   }
   return Math.floor(d / divisor[0]) + ":" + pad(Math.floor((d % divisor[0]) / divisor[1]));
-}
+};
 
 const tick = () => {
   if (curPage.begin === undefined)
@@ -196,10 +235,10 @@ const updateDatabaseWithDomainTimes = () =>{
   }
 
   curPage.begin = currTime; // reset start time for current active domain
-  console.log(domainsToUpdate)
+  console.log(domainsToUpdate);
   domainsToUpdate.forEach((increment, domain, map) => {
     // convert to seconds
-    console.log("DOM " + domain)
+    console.log("DOM " + domain);
     //TODO figure out why domain is undefined
     if (domain === undefined || domain === null) return;
     incrementDomainActivity(domain, Math.floor(increment / 1000));
@@ -209,6 +248,14 @@ const updateDatabaseWithDomainTimes = () =>{
 
 async function getDomains() {
   const db = firebase.firestore();
+  // TODO (Madhav, Xianhai)
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   const user = db.collection('users').doc('user_0');
 
   userData = await user.get();
@@ -269,9 +316,9 @@ const updatecurPage = (domain, tabId) => {
 
   // update curPage
   curPage.domain = domain;
-  curPage.begin = new Date(); 
+  curPage.begin = new Date();
   curPage.tabId = parseInt(tabId);
-}
+};
 
 // connects background.js to popup.js
 chrome.extension.onConnect.addListener(function(port) {
@@ -289,24 +336,31 @@ function addURL(domain) {
 
     if (!tempMap.has(domain)) {
       const db = firebase.firestore();
+      // TODO (Madhav, Xianhai)
+      // Update for the logged in user
+      //
+      // Instead of 'user_0', use the uid of the currently logged in user.
+      // In addition, add a check at the beggining of this function, returning
+      // if there is no logged in user
+      //
+      // NOTE: use firebase.auth().currentUser.uid as the identifier
       var userRef = db.collection("users").doc("user_0");
-      var domainString = "domains." + domain;
+      //var domainString = "domains." + domain;
       sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
       userRef.set(sitesList_);
     }
     else {
       incrementDomainVisits(domain);
     }
-  })
+  });
 }
 
 // update the productivity periodically
 const handleProductivity = async () => {
   const newProd = await getProductivity();
   console.log("NEW PROD " + newProd);
-  chrome.storage.sync.set({productivity: newProd})
-}
-
+  chrome.storage.sync.set({productivity: newProd});
+};
 
 /*
  * Other initializations

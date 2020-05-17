@@ -2,7 +2,6 @@
  * Firebase initializations
  */
 
-
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
 // TODO Madhav, Xianhai
@@ -13,7 +12,7 @@ var ui = new firebaseui.auth.AuthUI(firebase.auth());
 // - invalid parameters (blank email/pass)
 const uiConfig = {
   callbacks: {
-    signInSuccessWithAuthResult: function (authResult, redirectUrl) {
+    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
       // User successfully signed in.
       // Return type determines whether we continue the redirect automatically
       // or whether we leave that to developer to handle.
@@ -55,7 +54,6 @@ const uiConfig = {
             });
         }
       });
-      
       return true;
     },
   },
@@ -71,7 +69,8 @@ const uiConfig = {
       authMethod: 'https://accounts.google.com',
     },
   ]
-}
+};
+
 ui.start('#firebaseui-auth-container', uiConfig);
 
 /*
@@ -85,7 +84,7 @@ function compareTime(a, b) {
 
 async function getDomains() {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -110,8 +109,8 @@ const updateProductivity = () => {
     else {
       document.getElementById('p_score').innerHTML = data.productivity + "%";
     }
-  })
-}
+  });
+};
 //connects popup.js to background.js
 var port = chrome.extension.connect({
   name: "Sample Communication"
@@ -146,7 +145,7 @@ function updateSites(sitesList) {
 
     console.log(sortedDomains);
 
-    var MAX_SITES = 5
+    var MAX_SITES = 5;
     var numSites = sortedDomains.length < MAX_SITES ? sortedDomains.length : MAX_SITES;
 
     var list = document.createElement('ol');
@@ -320,7 +319,7 @@ function removeTeamFormation() {
 
 function addTeamFormation(){
   let elem = document.getElementById("team-formation");
-  elem.innerHTML = 
+  elem.innerHTML =
   "<div>"+
     "<form id=\"selection\">"+
       "<label for=\"new_team_name\">Team name:</label><br>" +

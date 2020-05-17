@@ -28,13 +28,21 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function updateDomainProductive(domain, val) {
   const db = firebase.firestore();
+  // TODO (Madhav, Xianhai)
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   const user = db.collection("users").doc("user_0");
   domain = document.getElementById('unproductive_domain').value;
   var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
   domain = urlParts[0];
   val = getRadioVal( document.getElementById('selection'), 'if' );
   var isTrue = (val == 'true');
-  let userData = user.get().then(documentSnapshot => {
+  user.get().then(documentSnapshot => {
     if(documentSnapshot.exists) {
       let data = documentSnapshot.data();
 
