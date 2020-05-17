@@ -37,7 +37,7 @@ const uiConfig = {
       authMethod: 'https://accounts.google.com',
     },
   ]
-}
+};
 
 ui.start('#firebaseui-auth-container', uiConfig);
 
@@ -53,7 +53,7 @@ function compareTime(a, b) {
 
 async function getDomains() {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.

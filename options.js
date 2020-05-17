@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function updateDomainProductive(domain, val) {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.

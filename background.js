@@ -42,7 +42,7 @@ const incrementDomainActivity = (domain, increment) => {
   var tim = 0;
   var prod = false;
 
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -91,7 +91,7 @@ const incrementDomainVisits = (domain) => {
   var vis = -1;
   var tim = 0;
   var prod = false;
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -140,7 +140,7 @@ const incrementDomainVisits = (domain) => {
 const getProductivity = async () => {
   const db = firebase.firestore();
 
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -240,7 +240,7 @@ const updateDatabaseWithDomainTimes = () =>{
 
 async function getDomains() {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai) 
+  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -333,14 +333,14 @@ function addURL(domain) {
 
     if (!tempMap.has(domain)) {
       const db = firebase.firestore();
-  // TODO (Madhav, Xianhai) 
-  // Update for the logged in user
-  //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
+      // TODO (Madhav, Xianhai)
+      // Update for the logged in user
+      //
+      // Instead of 'user_0', use the uid of the currently logged in user.
+      // In addition, add a check at the beggining of this function, returning
+      // if there is no logged in user
+      //
+      // NOTE: use firebase.auth().currentUser.uid as the identifier
       var userRef = db.collection("users").doc("user_0");
       //var domainString = "domains." + domain;
       sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
