@@ -21,8 +21,8 @@ const updateProductivity = () => {
     else {
       document.getElementById('p_score').innerHTML = data.productivity + "%";
     }
-  })
-}
+  });
+};
 //connects popup.js to background.js
 var port = chrome.extension.connect({
   name: "Sample Communication"
@@ -46,7 +46,7 @@ port.onMessage.addListener(function(msg) {
     //let domain = matches && matches[1];
     this.document.getElementById('domain').innerHTML = msg;
   }
-}); 
+});
 
 function sortDomains(data) {
   tempMap = new Map(Object.entries(data["domains"]));
@@ -59,7 +59,7 @@ function updateSites(sitesList) {
 
     console.log(sortedDomains);
 
-    var MAX_SITES = 5
+    var MAX_SITES = 5;
     var numSites = sortedDomains.length < MAX_SITES ? sortedDomains.length : MAX_SITES;
 
     var list = document.createElement('ol');

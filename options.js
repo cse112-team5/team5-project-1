@@ -32,7 +32,7 @@ function updateDomainProductive(domain, val) {
   domain = document.getElementById('unproductive_domain').value;
   val = getRadioVal( document.getElementById('selection'), 'if' );
   var isTrue = (val == 'true');
-  let userData = user.get().then(documentSnapshot => {
+  user.get().then(documentSnapshot => {
     if(documentSnapshot.exists) {
       let data = documentSnapshot.data();
 
