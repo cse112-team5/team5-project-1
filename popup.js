@@ -77,11 +77,7 @@ async function getDomains() {
           return -1;
       });
 
-      var userRef = db.collection('users').doc(user.uid);
-
-      var userData = await userRef.get();
-
-      return userData.data();
+      return (await db.collection('users').doc(user.uid).get().data());
     } else {
       console.log("getDomains not logged in")
       // No user is signed in.
