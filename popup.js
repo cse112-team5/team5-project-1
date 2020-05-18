@@ -4,6 +4,8 @@
 
 var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
+let inviteCode = null;
+
 // TODO Madhav, Xianhai
 // update this config to make sure all outcomes are handles
 // - successful login
@@ -41,7 +43,6 @@ const uiConfig = {
                 .then((invCode) =>{
                   console.log("invCode: " + invCode);
                   showInviteCode(invCode);
-                  chrome.storage.sync.set({"invCode": invite_code});
                   removeTeamFormation();
                 })
                 .catch((error)=>{
@@ -111,28 +112,48 @@ const updateProductivity = () => {
     }
   });
 };
-//connects popup.js to background.js
-var port = chrome.extension.connect({
-  name: "Sample Communication"
-});
 
-// loads domain from background.js if we get one, otherwise does a backup query
-port.onMessage.addListener(function (msg) {
-  console.log("message:" + msg);
-  // do backup query if msg was null
-  if (msg == null) {
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, tabs => {
-      let url = tabs[0].url;
-      // regex to split url from domain
-      let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-      let domain = matches && matches[1];
-      this.document.getElementById('domain').innerHTML = domain;
-    });
+function getInviteCode(){
+  const db = firebase.firestore();
+  var user = firebase.auth().currentUser;
+  if (user){
+    db.collection("users").doc(user.uid).get()
+      .then((docRef)=>{
+        console.log(docRef);
+        return docRef.get("teamId");
+      })
+      .then((teamId)=>{
+        console.log("teamid: " + teamId);
+        db.collection("teams").doc(teamId).get()
+          .then((docRef) => {
+            console.log(docRef);
+            return docRef.get("invite_code");
+          })
+          .then((invCode) =>{
+            console.log("invCode: " + invCode);
+            showInviteCode(invCode);
+            removeTeamFormation();
+          })
+          .catch((error)=>{
+            console.error("Error getting document: ", error);
+          });
+      })
+      .catch(function (error) {
+        // The document probably doesn't exist.
+        console.log("User has no team");
+      });
   }
-  else {
-    this.document.getElementById('domain').innerHTML = msg;
-  }
-});
+}
+
+function updateCurrentDomain(){
+  chrome.tabs.query({ active: true, lastFocusedWindow: true }, tabs => {
+    let url = tabs[0].url;
+    // regex to split url from domain
+    let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
+    let domain = matches && matches[1];
+    this.document.getElementById('domain').innerHTML = domain;
+  });
+}
 
 function sortDomains(data) {
   tempMap = new Map(Object.entries(data["domains"]));
@@ -166,69 +187,59 @@ function createTeam(teamName) {
   var user = firebase.auth().currentUser;
   console.log("current uid: " + user.uid);
 
-  db.collection("teams").add({
-    name: teamName,
-    members: []
-  })
-    .then(function (docRef) {
-      console.log("Document written with ID: ", docRef.id);
-      db.collection("teams").doc(docRef.id).update({
-        invite_code: docRef.id
-      })
-        .then(function () {
-          console.log("Document successfully updated!");
-          joinTeam(docRef.id);
-          return docRef.id;
-        })
-        .catch(function (error) {
-          // The document probably doesn't exist.
-          console.error("Error updating document: ", error);
-        });
+  if (user){
+    db.collection("teams").add({
+      name: teamName,
+      members: []
     })
-    .catch(function (error) {
-      console.error("Error adding document: ", error);
-    });
-
+      .then(function (docRef) {
+        console.log("Document written with ID: ", docRef.id);
+        db.collection("teams").doc(docRef.id).update({
+          invite_code: docRef.id
+        })
+          .then(function () {
+            console.log("Document successfully updated!");
+            joinTeam(docRef.id);
+            return docRef.id;
+          })
+          .catch(function (error) {
+            // The document probably doesn't exist.
+            console.error("Error updating document: ", error);
+          });
+      })
+      .catch(function (error) {
+        console.error("Error adding document: ", error);
+      });
+  }
 }
 
 function joinTeam(invite_code) {
   const db = firebase.firestore();
   var user = firebase.auth().currentUser;
   if (user) {
-    db.collection("teams").get().then((qs) => {
-      let team_id = null;
-      qs.forEach((teamDoc) => {
-        let team = teamDoc.data();
-        if (team.invite_code === invite_code) {
-          team_id = teamDoc.id;
-        }
-      });
-      return team_id;
-    }).then((team_id) => {
-      if (team_id == null) {
-        return null;
-      }
-      return db.collection("teams").doc(team_id).get();
-    }).then((docSnap) => {
-      if (docSnap == null) {
-        return;
-      }
-      let data = docSnap.data();
-      data.members.push(user.uid);
-      db.collection("teams").doc(docSnap.id).set(data);
-      db.collection("users").doc(user.uid).update({
-        teamId: docSnap.id
-      })
-        .then(function () {
-          console.log("Document successfully updated!");
-        })
-        .catch(function (error) {
-          // The document probably doesn't exist.
-          console.error("Error updating document: ", error);
+    db.collection("teams").where("invite_code", "==", invite_code).get().then((qs) => {
+      if (qs.size === 1){
+        let teamDoc = null;
+        qs.forEach((doc) => {
+          teamDoc = doc;
         });
-      chrome.storage.sync.set({"invCode": invite_code});
+        return teamDoc;
+      } else {
+        throw new Error("Error with invite code");
+      }
+    }).then((teamDoc) => {
+      if (teamDoc == null) {
+        throw new Error("Error with invite code");
+      }
+      let members = teamDoc.data().members;
+      members.push(user.uid);
+      db.collection("teams").doc(teamDoc.id).update({members: members});
+      db.collection("users").doc(user.uid).update({teamId: teamDoc.id});
+
       showInviteCode(invite_code);
       removeTeamFormation();
+    }).catch((err)=>{
+      console.error("Error in joinTeam: ", err);
     });
   }
 }
@@ -267,8 +278,6 @@ function leaveTeam(){
       });
   }
 }
-
-chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 
 function joinTeamHandler() {
   const invite_code = document.getElementById("invite_code").value;
@@ -319,30 +328,32 @@ function removeTeamFormation() {
 
 function addTeamFormation(){
   let elem = document.getElementById("team-formation");
-  elem.innerHTML =
-  "<div>"+
-    "<form id=\"selection\">"+
-      "<label for=\"new_team_name\">Team name:</label><br>" +
-      "<input type=\"text\" id=\"new_team_name\" name=\"new_team_name\"\><br>"+
-    "</form>" +
-    "<button id=\"newTeam\">Create team</button>" +
-  "</div>" +
-  "<div>" +
-    "<form id=\"joinTeamForm\">" +
-      "<label for=\"invite_code\">Invite Code:</label><br>" +
-      "<input type=\"text\" id=\"invite_code\" name=\"invite_code\"><br>" +
-    "</form>" +
-    "<button id=\"joinTeam\">Join team</button>" +
-  "</div>";
+  elem.innerHTML =  `
+  <div>
+    <form id=selection>
+      <label for=new_team_name>Team name:</label><br>
+      <input type=text id=new_team_name name=new_team_name><br>
+    </form>
+    <button id=newTeam>Create team</button>
+  </div>
+  <div>
+    <form id=joinTeamForm>
+      <label for=invite_code>Invite Code:</label><br>
+      <input type=text id=invite_code name=invite_code><br>
+    </form>
+    <button id=joinTeam>Join team</button>
+  </div>
+  `;
 
   document.getElementById("newTeam").addEventListener("click", createTeamHandler);
   document.getElementById("joinTeam").addEventListener("click", joinTeamHandler);
 
 }
 
+chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 
 window.onload = function () {
-  getDomains();
-  port.postMessage("load domain");
   updateProductivity();
+  updateCurrentDomain();
+  getInviteCode();
 };

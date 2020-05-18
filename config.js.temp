@@ -1,5 +1,8 @@
+// Once the credentials are filled below,
+// rename this file to 'config.js'
+
 config = {
-apiKey: "TODO",
+	apiKey: "TODO",
 	authDomain: "TODO",
 	databaseURL: "TODO",
 	projectId: "TODO",
