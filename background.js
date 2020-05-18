@@ -42,14 +42,8 @@ const incrementDomainActivity = (domain, increment) => {
   var tim = 0;
   var prod = false;
 
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
 
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
@@ -64,7 +58,7 @@ const incrementDomainActivity = (domain, increment) => {
             console.log("No such document!");
             db.collection('users').doc(user.uid).set({
               domains: {},
-              teamid: null
+              teamId: null
             })
             //return -1;
         }
@@ -98,6 +92,8 @@ const incrementDomainActivity = (domain, increment) => {
       });
     } else {
       // No user is signed in.
+      console.log("not logged in");
+      return 1;
     }
   });
 
@@ -123,19 +119,12 @@ const incrementDomainVisits = (domain) => {
   var vis = -1;
   var tim = 0;
   var prod = false;
-  // TODO (Madhav, Xianhai)
+
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
       // User is signed in.
-
       var ref = db.collection('users').doc(user.uid);
 
       ref.get().then(function(doc) {
@@ -146,14 +135,13 @@ const incrementDomainVisits = (domain) => {
             console.log("No such document!");
             db.collection('users').doc(user.uid).set({
               domains: {},
-              teamid: null
+              teamId: null
             });
         }
       }).catch(function(error) { // some error occurred
           console.log("Error getting document:", error);
           return -1;
       });
-
 
       db.collection('users').doc(user.uid).get().then((snapshot) => {
         var domains = snapshot.data()["domains"];
@@ -179,10 +167,10 @@ const incrementDomainVisits = (domain) => {
       });
     } else {
       // No user is signed in.
+      console.log("not signed in");
     }
   });
-
- 
+  return 0;
 };
 
 /*
@@ -199,68 +187,47 @@ const incrementDomainVisits = (domain) => {
  * return
  *      0.0 - 100.0 upon success, -1 otherwise
  */
-const getProductivity = async () => {
+const getProductivity = async (user) => {
   const db = firebase.firestore();
   var snapshot;
-
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-  firebase.auth().onAuthStateChanged(async function(user) {
+  var docRef = db.collection('users').doc(user.uid);
 
-    if (user) {
-      // User is signed in.
-      var docRef = db.collection('users').doc(user.uid);
-
-      docRef.get().then(function(doc) {
-        
-        if (doc.exists) { // user document exists
-            console.log("Document data:", doc.data());
-        } else { // user document doesn't exist
-            db.collection('users').doc(user.uid).set({
-              domains: {},
-              teamid: null
-            });
-        }
-      }).catch(function(error) { // some error occurred
-          console.log("Error getting document:", error);
-          return -1;
-      });
-
-      snapshot = await db.collection('users').doc(user.uid).get();
-
-      var domains = snapshot.data()["domains"];
-
-      var keys = Object.keys(domains);
-
-      var totalTime = 0;
-      var prodTime = 0;
-
-      keys.forEach(key => {
-        var currTime = domains[key]["time"];
-        if (domains[key]["productive"]) {
-          prodTime += currTime;
-        }
-        totalTime += currTime;
-      });
-      console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
-      console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
-
-      if (totalTime == 0) return -1; // cannot divide by zero, return error
-
-      return (prodTime / totalTime) * 100;
-      
-    } else {
-      // No user is signed in.
-      console.log("user not logged in getProductivity");
+  docRef.get().then(function(doc) {
+    if (doc.exists) { // user document exists
+        console.log("Document data:", doc.data());
+    } else { // user document doesn't exist
+        db.collection('users').doc(user.uid).set({
+          domains: {},
+          teamId: null
+        });
     }
+  }).catch(function(error) { // some error occurred
+      console.log("Error getting document:", error);
+      return -1;
   });
 
+  snapshot = await db.collection('users').doc(user.uid).get();
+  var domains = snapshot.data()["domains"];
+  var keys = Object.keys(domains);
+
+  var totalTime = 0;
+  var prodTime = 0;
+
+  keys.forEach(key => {
+    var currTime = domains[key]["time"];
+    if (domains[key]["productive"]) {
+      prodTime += currTime;
+    }
+    totalTime += currTime;
+  });
+  console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
+  console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
+
+  if (totalTime == 0) return -1; // cannot divide by zero, return error
+
+  return (prodTime / totalTime) * 100;
 };
 
 
@@ -330,51 +297,32 @@ const updateDatabaseWithDomainTimes = () =>{
   domainsToUpdate = new Map(); // clear list
 };
 
-async function getDomains() {
+async function getDomains(user) {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
+  var docRef = db.collection('users').doc(user.uid);
 
-  firebase.auth().onAuthStateChanged(async function(user) {
-    if (user) {
-      // User is signed in.
-      console.log("getDomains logged in");
-      var docRef = db.collection('users').doc(user.uid);
-
-      docRef.get().then(function(doc) {
-        
-        if (doc.exists) { // user document exists
-            console.log("Document data:", doc.data());
-        } else { // user document doesn't exist
-            console.log("No such document!");
-            db.collection('users').doc(user.uid).set({
-              domains: {},
-              teamid: null
-            });
-        }
-      }).catch(function(error) { // some error occurred
-          console.log("Error getting document:", error);
-          return -1;
-      });
-
-      const user = db.collection('users').doc(user.uid);
-
-      userData = await user.get();
-
-      return userData.data();
-    } else {
-      console.log("getDomains not logged in");
+  docRef.get().then(function(doc) {
+    
+    if (doc.exists) { // user document exists
+        console.log("Document data:", doc.data());
+    } else { // user document doesn't exist
+        console.log("No such document!");
+        db.collection('users').doc(user.uid).set({
+          domains: {},
+          teamId: null
+        });
     }
+  }).catch(function(error) { // some error occurred
+      console.log("Error getting document:", error);
+      return -1;
   });
 
-  
-}
+  const userRef = db.collection('users').doc(user.uid);
+  userData = await userRef.get();
+  return userData.data();
+} 
 
 // handles change in url for a tab
 const handleUpdate = (tabId, changeInfo, tab) => {
@@ -446,43 +394,66 @@ chrome.extension.onConnect.addListener(function(port) {
   });
 });
 
-function addURL(domain) {
-  sitesList = getDomains();
-  console.log(domain);
-  console.log("add url, getDomains result is: " + sitesList);
-  if (sites)
-  sitesList.then(sitesList_ => {
-    tempMap = new Map(Object.entries(sitesList_["domains"]));
+async function addURL(domain) {
+  firebase.auth().onAuthStateChanged(async function(user) {
+    if (user) {
+      // User is signed in.
+      sitesList = await getDomains(user);
+      console.log(domain);
+      sitesList.then(sitesList_ => {
+        tempMap = new Map(Object.entries(sitesList_["domains"]));
 
-    if (!tempMap.has(domain)) {
-      const db = firebase.firestore();
-      // TODO (Madhav, Xianhai)
-      // Update for the logged in user
-      //
-      // Instead of 'user_0', use the uid of the currently logged in user.
-      // In addition, add a check at the beggining of this function, returning
-      // if there is no logged in user
-      //
-      // NOTE: use firebase.auth().currentUser.uid as the identifier
+        if (!tempMap.has(domain)) {
+          const db = firebase.firestore();
+          // Update for the logged in user
+          //
+          var docRef = db.collection('users').doc(user.uid);
 
+          docRef.get().then(function(doc) {
+            if (doc.exists) { // user document exists
+                console.log("Document data:", doc.data());
+            } else { // user document doesn't exist
+                console.log("No such document!");
+                db.collection('users').doc(user.uid).set({
+                  domains: {},
+                  teamId: null
+                });
+            }
+          }).catch(function(error) { // some error occurred
+              console.log("Error getting document:", error);
+              return -1;
+          });
 
+          const userRef = db.collection('users').doc(user.uid);
+          sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
+          userRef.set(sitesList_);
 
-      var userRef = db.collection("users").doc("user_0");
-      //var domainString = "domains." + domain;
-      sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
-      userRef.set(sitesList_);
-    }
-    else {
-      incrementDomainVisits(domain);
+        }
+        else {
+          incrementDomainVisits(domain);
+        }
+      });
+    } else {
+      // No user is signed in.
+      console.log("not logged in, can't add URL");
     }
   });
 }
 
 // update the productivity periodically
 const handleProductivity = async () => {
-  const newProd = await getProductivity();
-  console.log("NEW PROD " + newProd);
-  chrome.storage.sync.set({productivity: newProd});
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // User is signed in.
+      const newProd = await getProductivity(user);
+      console.log("NEW PROD " + newProd);
+      chrome.storage.sync.set({productivity: newProd});
+    } else {
+      // No user is signed in.
+      console.log("not logged in");
+    }
+  });
+  
 };
 
 /*
@@ -491,8 +462,8 @@ const handleProductivity = async () => {
 
 
 // updates database every minute; only reduce time for testing as there will be many writes
-setInterval(handleProductivity, 1000);
-setInterval(updateDatabaseWithDomainTimes, 1000);
+setInterval(handleProductivity, 3000);
+setInterval(updateDatabaseWithDomainTimes, 5000);
 setInterval(tick, 1000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
 chrome.tabs.onActivated.addListener(handleChangeTab);

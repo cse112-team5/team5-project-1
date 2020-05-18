@@ -28,40 +28,64 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function updateDomainProductive(domain, val) {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-  const user = db.collection("users").doc("user_0");
-  domain = document.getElementById('unproductive_domain').value;
-  val = getRadioVal( document.getElementById('selection'), 'if' );
-  var isTrue = (val == 'true');
-  user.get().then(documentSnapshot => {
-    if(documentSnapshot.exists) {
-      let data = documentSnapshot.data();
 
-      const map = new Map(Object.entries(data["domains"]));
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // User is signed in.
+      var ref = db.collection('users').doc(user.uid);
 
-      // update
-      if(map.has(domain)) {
-        time = data["domains"][domain]["time"];
-        visits = data["domains"][domain]["visits"];
-        data["domains"][domain] = {productive: isTrue, time: time, visits: visits};
-        user.set(data);
-      }
-      // add
-      else{
-        data["domains"][domain] = {productive: isTrue, time: 0, visits: 0};
-        user.set(data);
-      }
+      ref.get().then(function(doc) {
+        
+        if (doc.exists) { // user document exists
+            console.log("Document data:", doc.data());
+        } else { // user document doesn't exist, create it
+            console.log("No such document!");
+            db.collection('users').doc(user.uid).set({
+              domains: {},
+              teamId: null
+            })
+            //return -1;
+        }
+      }).catch(function(error) { // some error occurred
+          console.log("Error getting document:", error);
+          return -1;
+      });
+     
+      const userRef = db.collection("users").doc(user.uid);
+      domain = document.getElementById('unproductive_domain').value;
+      val = getRadioVal( document.getElementById('selection'), 'if' );
+      var isTrue = (val == 'true');
+      userRef.get().then(documentSnapshot => {
+        if(documentSnapshot.exists) {
+          let data = documentSnapshot.data();
+    
+          const map = new Map(Object.entries(data["domains"]));
+    
+          // update
+          if(map.has(domain)) {
+            time = data["domains"][domain]["time"];
+            visits = data["domains"][domain]["visits"];
+            data["domains"][domain] = {productive: isTrue, time: time, visits: visits};
+            userRef.set(data);
+          }
+          // add
+          else{
+            data["domains"][domain] = {productive: isTrue, time: 0, visits: 0};
+            userRef.set(data);
+          }
+        }
+      });
+      window.alert("Domain added successfully");
+      return 0;
+
+    } else {
+      // No user is signed in.
+      console.log("no user signed in");
+      return 1;
     }
-  });
-  window.alert("Domain added successfully");
-  return 0;
+  }); 
 }
 
 //helper function to get user selection
