@@ -77,7 +77,7 @@ async function getDomains() {
           return -1;
       });
 
-      const userRef = db.collection('users').doc(user.uid);
+      var userRef = db.collection('users').doc(user.uid);
 
       userData = await userRef.get();
 
@@ -88,7 +88,6 @@ async function getDomains() {
     }
   });
 
-  
 }
 
 const updateProductivity = () => {

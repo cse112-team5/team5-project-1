@@ -37,40 +37,38 @@ const incrementDomainActivity = (domain, increment) => {
   if (domain.length == 0) return -1;
 
   const db = firebase.firestore();
-
   var vis = -1;
   var tim = 0;
   var prod = false;
 
   // Update for the logged in user
   //
-
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
 
       var ref = db.collection('users').doc(user.uid);
 
       ref.get().then(function(doc) {
-        
+
         if (doc.exists) { // user document exists
-            console.log("Document data:", doc.data());
+          console.log("Document data:", doc.data());
         } else { // user document doesn't exist, create it
-            console.log("No such document!");
-            db.collection('users').doc(user.uid).set({
-              domains: {},
-              teamId: null
-            })
-            //return -1;
+          console.log("No such document!");
+          db.collection('users').doc(user.uid).set({
+            domains: {},
+            teamId: null
+          });
+          //return -1;
         }
       }).catch(function(error) { // some error occurred
-          console.log("Error getting document:", error);
-          return -1;
+        console.log("Error getting document:", error);
+        return -1;
       }); 
 
       // User is signed in.
       db.collection('users').doc(user.uid).get().then((snapshot) => {
         var domains = snapshot.data()["domains"];
-    
+
         if (domain in domains) {
           vis = domains[domain]["visits"];
           tim = domains[domain]["time"];
@@ -81,9 +79,9 @@ const incrementDomainActivity = (domain, increment) => {
           tim = 0;
           prod = true;
         }
-    
+
         var sitesList = snapshot.data();
-    
+
         var userRef = db.collection("users").doc(user.uid);
         console.log("incrementing activity time for " + domain + " by " + increment);
         sitesList["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
@@ -96,10 +94,6 @@ const incrementDomainActivity = (domain, increment) => {
       return 1;
     }
   });
-
-
-
-  
 };
 
 /*
@@ -128,19 +122,18 @@ const incrementDomainVisits = (domain) => {
       var ref = db.collection('users').doc(user.uid);
 
       ref.get().then(function(doc) {
-        
         if (doc.exists) { // user document exists
-            console.log("Document data:", doc.data());
+          console.log("Document data:", doc.data());
         } else { // user document doesn't exist
-            console.log("No such document!");
-            db.collection('users').doc(user.uid).set({
-              domains: {},
-              teamId: null
-            });
+          console.log("No such document!");
+          db.collection('users').doc(user.uid).set({
+            domains: {},
+            teamId: null
+          });
         }
       }).catch(function(error) { // some error occurred
-          console.log("Error getting document:", error);
-          return -1;
+        console.log("Error getting document:", error);
+        return -1;
       });
 
       db.collection('users').doc(user.uid).get().then((snapshot) => {
@@ -196,16 +189,16 @@ const getProductivity = async (user) => {
 
   docRef.get().then(function(doc) {
     if (doc.exists) { // user document exists
-        console.log("Document data:", doc.data());
+      console.log("Document data:", doc.data());
     } else { // user document doesn't exist
-        db.collection('users').doc(user.uid).set({
-          domains: {},
-          teamId: null
-        });
+      db.collection('users').doc(user.uid).set({
+        domains: {},
+        teamId: null
+      });
     }
   }).catch(function(error) { // some error occurred
-      console.log("Error getting document:", error);
-      return -1;
+    console.log("Error getting document:", error);
+    return -1;
   });
 
   snapshot = await db.collection('users').doc(user.uid).get();
@@ -304,25 +297,25 @@ async function getDomains(user) {
   var docRef = db.collection('users').doc(user.uid);
 
   docRef.get().then(function(doc) {
-    
-    if (doc.exists) { // user document exists
-        console.log("Document data:", doc.data());
+
+    if (doc.exists) { // user document exist
+      console.log("Document data:", doc.data());
     } else { // user document doesn't exist
-        console.log("No such document!");
-        db.collection('users').doc(user.uid).set({
-          domains: {},
-          teamId: null
-        });
+      console.log("No such document!");
+      db.collection('users').doc(user.uid).set({
+        domains: {},
+        teamId: null
+      });
     }
   }).catch(function(error) { // some error occurred
-      console.log("Error getting document:", error);
-      return -1;
+    console.log("Error getting document:", error);
+    return -1;
   });
 
   const userRef = db.collection('users').doc(user.uid);
   userData = await userRef.get();
   return userData.data();
-} 
+}
 
 // handles change in url for a tab
 const handleUpdate = (tabId, changeInfo, tab) => {
@@ -411,17 +404,17 @@ async function addURL(domain) {
 
           docRef.get().then(function(doc) {
             if (doc.exists) { // user document exists
-                console.log("Document data:", doc.data());
+              console.log("Document data:", doc.data());
             } else { // user document doesn't exist
-                console.log("No such document!");
-                db.collection('users').doc(user.uid).set({
-                  domains: {},
-                  teamId: null
-                });
+              console.log("No such document!");
+              db.collection('users').doc(user.uid).set({
+                domains: {},
+                teamId: null
+              });
             }
           }).catch(function(error) { // some error occurred
-              console.log("Error getting document:", error);
-              return -1;
+            console.log("Error getting document:", error);
+            return -1;
           });
 
           const userRef = db.collection('users').doc(user.uid);
@@ -453,7 +446,6 @@ const handleProductivity = async () => {
       console.log("not logged in");
     }
   });
-  
 };
 
 /*

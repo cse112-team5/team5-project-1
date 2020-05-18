@@ -48,10 +48,10 @@ function updateDomainProductive(domain, val) {
           //return -1;
         }
       }).catch(function(error) { // some error occurred
-          console.log("Error getting document:", error);
-          return -1;
+        console.log("Error getting document:", error);
+        return -1;
       });
-     
+
       const userRef = db.collection("users").doc(user.uid);
       domain = document.getElementById('unproductive_domain').value;
       val = getRadioVal( document.getElementById('selection'), 'if' );
@@ -59,7 +59,7 @@ function updateDomainProductive(domain, val) {
       userRef.get().then(documentSnapshot => {
         if(documentSnapshot.exists) {
           let data = documentSnapshot.data();
-
+          
           const map = new Map(Object.entries(data["domains"]));
           
           // update
