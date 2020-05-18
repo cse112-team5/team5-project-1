@@ -1,16 +1,15 @@
-// THIS IS A TEMPLATE FILE
 // Once the credentials are filled below,
 // rename this file to 'config.js'
 
-var config = {
-  apiKey: "TODO",
-  authDomain: "TODO",
-  databaseURL: "TODO",
-  projectId: "TODO",
-  storageBucket: "TODO",
-  messagingSenderId: "TODO",
-  appId: "TODO",
-  measurementId: "TODO"
+config = {
+	apiKey: "TODO",
+	authDomain: "TODO",
+	databaseURL: "TODO",
+	projectId: "TODO",
+	storageBucket: "TODO",
+	messagingSenderId: "TODO",
+	appId: "TODO",
+	measurementId: "TODO"
 };
 
 firebase.initializeApp(config);

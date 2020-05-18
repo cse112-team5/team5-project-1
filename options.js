@@ -38,6 +38,8 @@ function updateDomainProductive(domain, val) {
   // NOTE: use firebase.auth().currentUser.uid as the identifier
   const user = db.collection("users").doc("user_0");
   domain = document.getElementById('unproductive_domain').value;
+  var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+  domain = urlParts[0];
   val = getRadioVal( document.getElementById('selection'), 'if' );
   var isTrue = (val == 'true');
   user.get().then(documentSnapshot => {
