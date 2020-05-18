@@ -74,10 +74,9 @@ async function getDomains() {
         }
       }).catch(function(error) { // some error occurred
           console.log("Error getting document:", error);
-          return -1;
       });
 
-      return (await db.collection('users').doc(user.uid).get().data());
+      return (await docRef.get().data());
     } else {
       console.log("getDomains not logged in")
       // No user is signed in.
