@@ -1,19 +1,3 @@
-<<<<<<< HEAD
-var config = {
-  apiKey: "AIzaSyCOhTt25qhJtQyWSEUFCU3s_ZE9EC3EiGs",
-  authDomain: "cse112-sp20.firebaseapp.com",
-  databaseURL: "https://cse112-sp20.firebaseio.com",
-  projectId: "cse112-sp20",
-  storageBucket: "cse112-sp20.appspot.com",
-  messagingSenderId: "861300546651",
-  appId: "1:861300546651:web:93eb90114a9f3e6df1737e"
-};
-
-
-firebase.initializeApp(config);
-
-=======
->>>>>>> master
 /*
  * Firebase communcation API
  */
@@ -43,24 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
  *      0 upon success, 1 otherwise
  */
 function updateDomainProductive(domain, val) {
-<<<<<<< HEAD
-  if (domain.length == 0) return -1;
-
-  const db = firebase.firestore();
-  
-  var vis = -1;
-  var tim = 0;
-  var prod = false;
-  db.collection('users').doc('user_0').get().then((snapshot) => {
-    var domains = snapshot.data()["domains"];
-    
-    if (!(domain in domains)) {
-      return 1;  // couldn't find the domain
-    }
-    vis = domains[domain]["visits"];
-    tim = domains[domain]["time"]; 
-    prod = domains[domain]["productive"]; 
-=======
   const db = firebase.firestore();
   // TODO (Madhav, Xianhai)
   // Update for the logged in user
@@ -97,7 +63,6 @@ function updateDomainProductive(domain, val) {
   window.alert("Domain added successfully");
   return 0;
 }
->>>>>>> master
 
 //helper function to get user selection
 function getRadioVal(form, name) {
