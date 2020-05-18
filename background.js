@@ -3,30 +3,11 @@
 */
 
 var portAuth;
+var portUserData;
 
-<<<<<<< HEAD
 /*
  * Firebase response handlers
  */
-=======
-<<<<<<< HEAD
-/*
- * Firebase response handlers
- */
-=======
-// TODO(DEVELOPER): Change the values below using values from the initialization snippet: Firebase Console > Overview > Add Firebase to your web app.
-// Initialize Firebase
-var config = {
-  apiKey: "AIzaSyCOhTt25qhJtQyWSEUFCU3s_ZE9EC3EiGs",
-  authDomain: "cse112-sp20.firebaseapp.com",
-  databaseURL: "https://cse112-sp20.firebaseio.com",
-  projectId: "cse112-sp20",
-  storageBucket: "cse112-sp20.appspot.com",
-  messagingSenderId: "861300546651",
-  appId: "1:861300546651:web:93eb90114a9f3e6df1737e"
-};
->>>>>>> 869a1c2628ea1909e836c6c7e273eebbe2f0d157
->>>>>>> Mingyu_Chen_Testing
 
 
 function initApp() {
@@ -111,6 +92,14 @@ const createUser = () => {
  * Firebase auth object. So, there's no need to pass in user id as a parameter as long as the user is
  * logged in.
  */
+
+function initApp() {
+  // Listen for auth state changes.
+  firebase.auth().onAuthStateChanged(function(user) {
+    console.log('User state change detected from the Background script of the Chrome Extension:', user);
+  });
+}
+
 
 /*
  * Increments the time spent on a domain for the user
@@ -321,30 +310,28 @@ async function getDomains() {
 const handleUpdate = (tabId, changeInfo, tab) => {
   const url = changeInfo.url;
 
-  if (url === "undefined" || url == null){
-    return;
-  }
-
-  let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-  let domain = matches && matches[1];
-
-  if (curPage.domain === domain){
+  if (url === undefined || url == null){
     return;
   }
 
   var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
   cleanDomain = urlParts[0];
-  addURL(cleanDomain);
 
-  updatecurPage(domain, tabId);
+  if (curPage.domain === cleanDomain) {
+    return;
+  }
+
+  addURL(cleanDomain);
+  updatecurPage(cleanDomain, tabId);
 };
 
-// handles when a user changes active tab
+// handles when a user changes active tab
 const handleChangeTab = (obj) => {
   chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
+    if (tabs[0] === undefined){
+      return;
+    }
     let url = tabs[0].url;
-    //  let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
-    //  let domain = matches && matches[1];
     var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
     domain = urlParts[0];
     updatecurPage(domain, tabs[0].id);
@@ -392,6 +379,13 @@ chrome.extension.onConnect.addListener(function(port) {
         sendAuthContext();
       }
     });
+  } else if (port.name === 'user-data'){
+    portUserData = port;
+    portUserData.onMessage.addListener(function(msg) {
+      if (msg.task === 'get-invite-code'){
+        getInviteCode();
+      }
+    });
   }
   else {
     port.onMessage.addListener(function(msg) {
@@ -428,6 +422,43 @@ function addURL(domain) {
   });
 }
 
+function getInviteCode(){
+  const db = firebase.firestore();
+  const user = firebase.auth().currentUser;
+  if (user){
+    db.collection("users").doc(user.uid).get()
+      .then((docRef)=>{
+        return docRef.get("teamId");
+      })
+      .then((teamId)=>{
+        if (teamId == null){
+          // no team
+          portUserData.postMessage({
+            res: 'invite-code-false',
+          });
+        } else {
+          db.collection("teams").doc(teamId).get()
+            .then((docRef) => {
+              return docRef.get("invite_code");
+            })
+            .then((invCode) =>{
+              // return invite code
+              portUserData.postMessage({
+                res: 'invite-code-true',
+                invite_code: invCode
+              });
+            })
+            .catch((error)=>{
+              console.error("Getting Invite Code Error: ", error);
+            });
+        }
+      })
+      .catch(function (error) {
+        console.log("Getting Invite Code Error: " + error);
+      });
+  }
+}
+
 // update the productivity periodically
 const handleProductivity = async () => {
   const newProd = await getProductivity();
@@ -441,10 +472,8 @@ const handleProductivity = async () => {
 
 
 // updates database every minute; only reduce time for testing as there will be many writes
-
-
 setInterval(handleProductivity, 3000);
-setInterval(updateDatabaseWithDomainTimes, 5000);
+setInterval(updateDatabaseWithDomainTimes, 60000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
 chrome.tabs.onActivated.addListener(handleChangeTab);
 
