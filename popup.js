@@ -1,77 +1,36 @@
 /*
+ * Globals
+ */
+
+
+var userLoggedIn = false;
+var userEmail = undefined;
+var userUid = undefined;
+/*
  * Firebase initializations
  */
 
-var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
-// TODO Madhav, Xianhai
-// update this config to make sure all outcomes are handles
-// - successful login
-// - account creation
-// - incorrect credentials
-// - invalid parameters (blank email/pass)
-const uiConfig = {
-  callbacks: {
-    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
-      // User successfully signed in.
-      // Return type determines whether we continue the redirect automatically
-      // or whether we leave that to developer to handle.
-      console.log(authResult);
-      document.getElementById('firebaseui-auth-container').style.display = 'none';
-      document.getElementById('result-email').innerHTML = "Logged in as: " + authResult.user.email;
-      document.getElementById('result-uid').innerHTML = "uid: " + authResult.user.uid;
-      const db = firebase.firestore();
-      chrome.storage.sync.get('invCode', function (invite_code) {
-        if(invite_code.length === 20) {
-          document.getElementById('invite_code_displayed').innerHTML = "Team invite code: " + invite_code;
-        } else {
-          console.log("uid: " + authResult.user.uid);
-          db.collection("users").doc(authResult.user.uid).get()
-            .then((docRef)=>{
-              console.log(docRef);
-              return docRef.get("teamId");
-            })
-            .then((teamId)=>{
-              console.log("teamid: " + teamId);
-              db.collection("teams").doc(teamId).get()
-                .then((docRef) => {
-                  console.log(docRef);
-                  return docRef.get("invite_code");
-                })
-                .then((invCode) =>{
-                  console.log("invCode: " + invCode);
-                  showInviteCode(invCode);
-                  chrome.storage.sync.set({"invCode": invite_code});
-                  removeTeamFormation();
-                })
-                .catch((error)=>{
-                  console.error("Error getting document: ", error);
-                });
-            })
-            .catch(function (error) {
-              // The document probably doesn't exist.
-              console.log("User has no team");
-            });
-        }
-      });
-      return true;
-    },
-  },
-
-  signInFlow: 'popup',
-
-  signInOptions: [
-    {
-      provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
-    },
-    {
-      provider: firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-      authMethod: 'https://accounts.google.com',
-    },
-  ]
+const portAuth = chrome.extension.connect({ name: 'auth' });
+portAuth.onMessage.addListener((msg) => {
+  console.log("RECEVE", msg);
+  if (msg.res === 'logged-in') {
+    renderHome();
+  }
+  else if (msg.res === 'auth-context') {
+    userLoggedIn = msg.loggedIn;
+    userEmail = msg.email;
+    userUid = msg.uid;
+    renderHome();
+  }
+});
+const handleLoginEmail = () => {};
+const handleLoginGmail = () => {
+  console.log("GMAIL");
+  portAuth.postMessage({ task: 'login-gmail' });
 };
 
-ui.start('#firebaseui-auth-container', uiConfig);
+//ui.start('#firebaseui-auth-container', uiConfig);
 
 /*
  * Client side functions
@@ -160,6 +119,7 @@ function updateSites(sitesList) {
   });
 
 }
+
 
 function createTeam(teamName) {
   const db = firebase.firestore();
@@ -268,6 +228,47 @@ function leaveTeam(){
   }
 }
 
+/*
+ * HTML rendering
+ */
+
+// grabs the auth context from background.js
+const getAuthContext = () => {
+  portAuth.postMessage({ task: 'get-auth-context' });
+};
+
+const renderHome = () => {
+  if (userLoggedIn) {
+    // we're logged in
+    const home = document.getElementsByClassName('home')[0];
+    while (home.firstChild) home.removeChild(home.firstChild);
+
+    home.innerHTML = `
+    <p class="result-email"></p>
+    <p class="result-uid"></p>
+    `;
+
+    document.getElementsByClassName('result-email')[0].innerHTML = userEmail;
+    document.getElementsByClassName('result-uid')[0].innerHTML = userUid;
+  }
+  else {
+    // we're not logged in, so display the login options
+    const home = document.getElementsByClassName('home')[0];
+    while (home.firstChild) home.removeChild(home.firstChild);
+
+    home.innerHTML = `
+    <div class="login-options">
+      <button class="login-email">Login with Email</button>
+      <button class="login-gmail">Login with Gmail</button>
+    </div>
+    `;
+
+    document.getElementsByClassName('login-email')[0].addEventListener('click', handleLoginEmail);
+    document.getElementsByClassName('login-gmail')[0].addEventListener('click', handleLoginGmail);
+  }
+};
+
+
 chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 
 function joinTeamHandler() {
@@ -346,3 +347,9 @@ window.onload = function () {
   port.postMessage("load domain");
   updateProductivity();
 };
+
+getAuthContext();
+
+document.addEventListener('DOMContentLoaded', function () {
+  renderHome();
+});

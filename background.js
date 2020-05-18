@@ -1,4 +1,10 @@
 /*
+ * Globals
+*/
+
+var portAuth;
+
+/*
  * Firebase response handlers
  */
 
@@ -6,15 +12,78 @@
 function initApp() {
   // Listen for auth state changes.
   firebase.auth().onAuthStateChanged(function(user) {
-    console.log('User state change detected from the Background script of the Chrome Extension:', user);
+    // create the user if new
+    createUser();
   });
 }
 
+/*
+ * Firebase authentication
+ */
+
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+const provider = new firebase.auth.GoogleAuthProvider();
+provider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+const loginGmail = () => {
+  firebase.auth().signInWithPopup(provider).then((result) => {
+    var user = result.user;
+    console.log('Logged in', user);
+    portAuth.postMessage({
+      res: 'logged-in',
+      email: user.email, uid: user.uid
+    });
+
+    // TODO Thomas, Jason
+    // I've removed the firebase ui since background.js is now in charge of
+    // launching gmail popups. I couldn't figure out how to get firebaseui to
+    // delegate that task to background.js. According to
+    // https://firebase.google.com/docs/auth/web/google-signin#authenticate_with_firebase_in_a_chrome_extension
+    // we should be making our signin call in background.js anyways.
+    //
+    // you can move whatever logic you had in that callback function in that ui
+    // config here.
+  }).catch((error) => {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    var email = error.email;
+    console.log (errorCode, errorMessage, email);
+  });
+};
+
+const sendAuthContext = () => {
+  const user = firebase.auth().currentUser;
+  var email = null;
+  var uid = null;
+
+  if (user) {
+    email = user.email;
+    uid = user.uid;
+  }
+
+  console.log("SENDING MSG");
+  portAuth.postMessage({
+    res: 'auth-context',
+    loggedIn: user !== null, email: email, uid: uid
+  });
+};
 
 /*
  * Firebase communcation API
  */
 
+const createUser = () => {
+  // if we're not logged in, return
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  // TODO replace with Madhav's code
+
+
+};
 
 /*
  * NOTE: Since we haven't implemented authentication yet, the following API calls should assume a global
@@ -42,7 +111,7 @@ function initApp() {
  *      0 upon success, 1 otherwise
  */
 const incrementDomainActivity = (domain, increment) => {
-  if (domain.length == 0) return -1;
+  if (domain.length === 0) return -1;
 
   const db = firebase.firestore();
 
@@ -92,7 +161,7 @@ const incrementDomainActivity = (domain, increment) => {
  *      0 upon success, 1 otherwise
  */
 const incrementDomainVisits = (domain) => {
-  if (domain.length == 0) return -1;
+  if (domain.length === 0) return -1;
 
   const db = firebase.firestore();
 
@@ -176,7 +245,7 @@ const getProductivity = async () => {
   console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
   console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
 
-  if (totalTime == 0) return -1; // cannot divide by zero, return error
+  if (totalTime === 0) return -1; // cannot divide by zero, return error
 
   return (prodTime / totalTime) * 100;
 };
@@ -190,33 +259,6 @@ const getProductivity = async () => {
 var curPage = {};
 var map = new Map();
 var domainsToUpdate = new Map();
-// var views = chrome.extension.getViews({
-//   type: "popup"
-// });
-
-const formatDuration = (d) => {
-  if (d < 0) {
-    return "?";
-  }
-  var divisor = d < 3600000 ? [60000, 1000] : [3600000, 60000];
-  function pad(x) {
-    return x < 10 ? "0" + x : x;
-  }
-  return Math.floor(d / divisor[0]) + ":" + pad(Math.floor((d % divisor[0]) / divisor[1]));
-};
-
-const tick = () => {
-  if (curPage.begin === undefined)
-    return;
-
-  if (map.has(curPage.domain)){
-    const timeSinceBegin = formatDuration(new Date() - curPage.begin + map.get(curPage.domain));
-    chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
-  } else {
-    const timeSinceBegin = formatDuration(new Date() - curPage.begin);
-    chrome.browserAction.setBadgeText({ 'tabId': parseInt(curPage.tabId), 'text': timeSinceBegin});
-  }
-};
 
 const updateDatabaseWithDomainTimes = () =>{
   const currTime = new Date();
@@ -322,10 +364,24 @@ const updatecurPage = (domain, tabId) => {
 
 // connects background.js to popup.js
 chrome.extension.onConnect.addListener(function(port) {
-  port.onMessage.addListener(function(msg) {
-    console.log("background message recieved " + msg);
-    port.postMessage(curPage.domain);
-  });
+  console.log("NAME ?",port.name, port.name === 'auth');
+  if (port.name === 'auth') {
+    portAuth = port;
+    portAuth.onMessage.addListener(function(msg) {
+      if (msg.task === 'login-gmail') {
+        loginGmail();
+      }
+      else if (msg.task === 'get-auth-context') {
+        sendAuthContext();
+      }
+    });
+  }
+  else {
+    port.onMessage.addListener(function(msg) {
+      console.log("background message recieved " + msg);
+      port.postMessage(curPage.domain);
+    });
+  }
 });
 
 function addURL(domain) {
@@ -369,8 +425,7 @@ const handleProductivity = async () => {
 
 // updates database every minute; only reduce time for testing as there will be many writes
 setInterval(handleProductivity, 3000);
-setInterval(updateDatabaseWithDomainTimes, 60000);
-setInterval(tick, 1000);
+setInterval(updateDatabaseWithDomainTimes, 5000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
 chrome.tabs.onActivated.addListener(handleChangeTab);
 
