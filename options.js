@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 var config = {
   apiKey: "AIzaSyCOhTt25qhJtQyWSEUFCU3s_ZE9EC3EiGs",
   authDomain: "cse112-sp20.firebaseapp.com",
@@ -11,6 +12,8 @@ var config = {
 
 firebase.initializeApp(config);
 
+=======
+>>>>>>> master
 /*
  * Firebase communcation API
  */
@@ -22,7 +25,13 @@ firebase.initializeApp(config);
  * Firebase auth object. So, there's no need to pass in user id as a parameter as long as the user is
  * logged in.
  */
-
+document.addEventListener('DOMContentLoaded', function() {
+  var link = document.getElementById('link');
+  // onClick's logic below:
+  link.addEventListener('click', function() {
+    updateDomainProductive('xxx','xxx');
+  });
+});
 /*
  * Updates the 'productive' flag for the domain for the user
  *
@@ -34,6 +43,7 @@ firebase.initializeApp(config);
  *      0 upon success, 1 otherwise
  */
 function updateDomainProductive(domain, val) {
+<<<<<<< HEAD
   if (domain.length == 0) return -1;
 
   const db = firebase.firestore();
@@ -50,13 +60,57 @@ function updateDomainProductive(domain, val) {
     vis = domains[domain]["visits"];
     tim = domains[domain]["time"]; 
     prod = domains[domain]["productive"]; 
+=======
+  const db = firebase.firestore();
+  // TODO (Madhav, Xianhai)
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
+  const user = db.collection("users").doc("user_0");
+  domain = document.getElementById('unproductive_domain').value;
+  val = getRadioVal( document.getElementById('selection'), 'if' );
+  var isTrue = (val == 'true');
+  user.get().then(documentSnapshot => {
+    if(documentSnapshot.exists) {
+      let data = documentSnapshot.data();
 
-    var sitesList = snapshot.data();
-    
-    var userRef = db.collection("users").doc("user_0");
-    console.log("making productivity = " + val + " for " + domain);
-    sitesList["domains"][domain] = { time: tim, productive: val, visits: vis };
-    userRef.set(sitesList);
-    return 0;
-  })
+      const map = new Map(Object.entries(data["domains"]));
+
+      // update
+      if(map.has(domain)) {
+        time = data["domains"][domain]["time"];
+        visits = data["domains"][domain]["visits"];
+        data["domains"][domain] = {productive: isTrue, time: time, visits: visits};
+        user.set(data);
+      }
+      // add
+      else{
+        data["domains"][domain] = {productive: isTrue, time: 0, visits: 0};
+        user.set(data);
+      }
+    }
+  });
+  window.alert("Domain added successfully");
+  return 0;
+}
+>>>>>>> master
+
+//helper function to get user selection
+function getRadioVal(form, name) {
+  var val;
+  // get list of radio buttons with specified name
+  var radios = form.elements[name];
+
+  // loop through list of radio buttons
+  for(var i=0, len=radios.length; i<len; i++) {
+    if(radios[i].checked) { // radio checked?
+      val = radios[i].value; // if so, hold its value in val
+      break; // and break out of for loop
+    }
+  }
+  return val; // return value of checked radio or undefined if none checked
 }

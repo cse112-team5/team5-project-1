@@ -1,8 +1,21 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
+    <script src="config.js"></script>
+    <script src="options.js"></script>
   </head>
   <body>
-    <a href='https://www.youtube.com/watch?v=Lmw4lzjEqD8'>uwu</a>
+  <form id="selection">
+    <label for="unproductive_domain">Unproductive Domain:</label><br>
+    <input type="text" id="unproductive_domain" name="unproductive_domain"><br>
+    <input type="radio"  name="if" value="true">
+    <label>True</label><br>
+    <input type="radio"  name="if" value="false">
+    <label>False</label><br>
+  </form>
+  <button id="link">
+    Enter
+  </button>
   </body>
 </html>
