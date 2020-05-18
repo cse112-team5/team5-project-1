@@ -61,11 +61,24 @@ async function getDomains() {
   // if there is no logged in user
   //
   // NOTE: use firebase.auth().currentUser.uid as the identifier
-  const user = db.collection('users').doc('user_0');
 
-  userData = await user.get();
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // User is signed in.
 
-  return userData.data();
+      
+
+      const user = db.collection('users').doc('user_0');
+
+      userData = await user.get();
+
+      return userData.data();
+    } else {
+      // No user is signed in.
+    }
+  });
+
+  
 }
 
 const updateProductivity = () => {
