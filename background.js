@@ -336,6 +336,8 @@ const handleProductivity = async () => {
 
 
 // updates database every minute; only reduce time for testing as there will be many writes
+
+
 setInterval(handleProductivity, 3000);
 setInterval(updateDatabaseWithDomainTimes, 5000);
 chrome.tabs.onUpdated.addListener(handleUpdate);
