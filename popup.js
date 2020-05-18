@@ -1,14 +1,41 @@
-var config = {
-  apiKey: "TODO",
-  authDomain: "TODO",
-  databaseURL: "TODO",
-  projectId: "TODO",
-  storageBucket: "TODO",
-  messagingSenderId: "TODO",
-  appId: "TODO"
+/*
+ * Globals
+ */
+
+var userLoggedIn = false;
+var userEmail = undefined;
+var userUid = undefined;
+/*
+ * Firebase initializations
+ */
+
+
+const portAuth = chrome.extension.connect({ name: 'auth' });
+portAuth.onMessage.addListener((msg) => {
+  console.log("RECEVE", msg);
+  if (msg.res === 'logged-in') {
+    renderHome();
+  }
+  else if (msg.res === 'auth-context') {
+    userLoggedIn = msg.loggedIn;
+    userEmail = msg.email;
+    userUid = msg.uid;
+    renderHome();
+  }
+});
+const handleLoginEmail = () => {};
+const handleLoginGmail = () => {
+  console.log("GMAIL");
+  portAuth.postMessage({ task: 'login-gmail' });
 };
 
-firebase.initializeApp(config);
+//ui.start('#firebaseui-auth-container', uiConfig);
+
+
+/*
+ * Client side functions
+ */
+
 
 function compareTime(a, b) {
   return b[1].time - a[1].time;
@@ -16,6 +43,14 @@ function compareTime(a, b) {
 
 async function getDomains() {
   const db = firebase.firestore();
+  // TODO (Madhav, Xianhai)
+  // Update for the logged in user
+  //
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
   const user = db.collection('users').doc('user_0');
 
   userData = await user.get();
@@ -33,8 +68,8 @@ const updateProductivity = () => {
     else {
       document.getElementById('p_score').innerHTML = data.productivity + "%";
     }
-  })
-}
+  });
+};
 //connects popup.js to background.js
 var port = chrome.extension.connect({
   name: "Sample Communication"
@@ -58,7 +93,7 @@ port.onMessage.addListener(function(msg) {
     //let domain = matches && matches[1];
     this.document.getElementById('domain').innerHTML = msg;
   }
-}); 
+});
 
 function sortDomains(data) {
   tempMap = new Map(Object.entries(data["domains"]));
@@ -71,7 +106,7 @@ function updateSites(sitesList) {
 
     console.log(sortedDomains);
 
-    var MAX_SITES = 5
+    var MAX_SITES = 5;
     var numSites = sortedDomains.length < MAX_SITES ? sortedDomains.length : MAX_SITES;
 
     var list = document.createElement('ol');
@@ -87,9 +122,55 @@ function updateSites(sitesList) {
 
 }
 
+/*
+ * HTML rendering
+ */
+
+// grabs the auth context from background.js
+const getAuthContext = () => {
+  portAuth.postMessage({ task: 'get-auth-context' });
+};
+
+const renderHome = () => {
+  if (userLoggedIn) {
+    // we're logged in
+    const home = document.getElementsByClassName('home')[0];
+    while (home.firstChild) home.removeChild(home.firstChild);
+
+    home.innerHTML = `
+    <p class="result-email"></p>
+    <p class="result-uid"></p>
+    `;
+
+    document.getElementsByClassName('result-email')[0].innerHTML = userEmail;
+    document.getElementsByClassName('result-uid')[0].innerHTML = userUid;
+  }
+  else {
+    // we're not logged in, so display the login options
+    const home = document.getElementsByClassName('home')[0];
+    while (home.firstChild) home.removeChild(home.firstChild);
+
+    home.innerHTML = `
+    <div class="login-options">
+      <button class="login-email">Login with Email</button>
+      <button class="login-gmail">Login with Gmail</button>
+    </div>
+    `;
+
+    document.getElementsByClassName('login-email')[0].addEventListener('click', handleLoginEmail);
+    document.getElementsByClassName('login-gmail')[0].addEventListener('click', handleLoginGmail);
+  }
+};
+
 chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 window.onload = function() {
   getDomains();
   port.postMessage("load domain");
   updateProductivity();
 };
+
+getAuthContext();
+
+document.addEventListener('DOMContentLoaded', function () {
+  renderHome();
+});
