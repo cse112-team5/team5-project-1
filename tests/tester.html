@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Jasmine Spec Runner v3.5.0</title>
+
+  <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
+
+  <!-- include source files here... -->
+  <script src="/background.js"></script>
+  <script src="/options.js"></script>
+
+</head>
+
+<body>
+  <h1>Background Tests</h1>
+  <table border=1>
+    <tr>
+      <td>Test getDomain</td>
+      <td id="test1"></td>
+    </tr>
+    <tr>
+      <td>Test addUrl</td>
+      <td id="test2"></td>
+    </tr>
+    <tr>
+      <td>Test incrementDomainVisits</td>
+      <td id="test3"></td>
+    </tr>
+    <tr>
+      <td>Test getProductivity</td>
+      <td id="test5"></td>
+    </tr>
+    <tr>
+      <td>Test incrementDomainActivity</td>
+      <td id="test6"></td>
+    </tr>
+    
+  </table>
+
+  <h1>Options Tests</h1>
+  <table border=1>
+    <tr>
+      <td>Test updateDomainProductive</td>
+      <td id="test4"></td>
+    </tr>
+  </table>
+
+  <script src="/tests/background.test.js"></script>
+  <script src="/tests/options.test.js"></script>
+</body>
+
+</html>
