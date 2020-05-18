@@ -8,4 +8,3 @@ function testUpdateDomainProductive() {
     test.innerHTML = "Passed: properly returns 0 on sucess";
     //updateDomainProductive("unproductive.com", false);
 }
-testUpdateDomainProductive();
