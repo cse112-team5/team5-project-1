@@ -1,31 +1,40 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <style>
-body {
-  width: 450px;
-  height:450px;
-}
-    </style>
-    <script src="https://www.gstatic.com/firebasejs/ui/4.5.0/firebase-ui-auth.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.5.0/firebase-ui-auth.css" />
-    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
-    <script src="config.js"></script>
-    <script src="popup.js"></script>
-  </head>
-  <body>
-    <h1>Phantime</h1>
-    <div>
-      <h2>Productivity</h2>
-      <p id="p_score"></p>
+
+<head>
+  <style>
+    
+    body {
+      width: 450px;
+      height: 450px;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/ui/4.5.0/firebase-ui-auth.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.5.0/firebase-ui-auth.css" />
+  <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</head>
+
+<body>
+  <h1>Phantime</h1>
+  <div>
+    <h2>Productivity</h2>
+    <p id="p_score"></p>
+  </div>
+  <div>
+    <h2>You are currently on</h2>
+    <p id="domain"></p>
+  </div>
+  <div>
+    <h2 id="topsites"></h2>
+    <p id="sitesList"></p>
+  </div>
+  <div>
+    <div id="team-formation">
     </div>
     <div>
-      <h2>You are currently on</h2>
-      <p id="domain"></p>
-    </div>
-    <div>
-      <h2 id="topsites"></h2>
-      <p id="sitesList"></p>
+      <p id="invite_code_displayed"></p>
     </div>
     <div class="home"> 
     </div>
