@@ -59,9 +59,9 @@ function updateDomainProductive(domain, val) {
       userRef.get().then(documentSnapshot => {
         if(documentSnapshot.exists) {
           let data = documentSnapshot.data();
-          
+
           const map = new Map(Object.entries(data["domains"]));
-          
+
           // update
           if(map.has(domain)) {
             time = data["domains"][domain]["time"];
@@ -84,7 +84,7 @@ function updateDomainProductive(domain, val) {
       console.log("no user signed in");
       return 1;
     }
-  }); 
+  });
 }
 
 //helper function to get user selection

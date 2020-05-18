@@ -79,7 +79,7 @@ async function getDomains() {
 
       var userRef = db.collection('users').doc(user.uid);
 
-      userData = await userRef.get();
+      var userData = await userRef.get();
 
       return userData.data();
     } else {

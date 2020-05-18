@@ -63,7 +63,7 @@ const incrementDomainActivity = (domain, increment) => {
       }).catch(function(error) { // some error occurred
         console.log("Error getting document:", error);
         return -1;
-      }); 
+      });
 
       // User is signed in.
       db.collection('users').doc(user.uid).get().then((snapshot) => {
