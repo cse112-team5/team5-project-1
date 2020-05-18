@@ -442,7 +442,7 @@ async function addURL(domain) {
 
 // update the productivity periodically
 const handleProductivity = async () => {
-  firebase.auth().onAuthStateChanged(function(user) {
+  firebase.auth().onAuthStateChanged(async function(user) {
     if (user) {
       // User is signed in.
       const newProd = await getProductivity(user);

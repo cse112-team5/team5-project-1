@@ -77,9 +77,9 @@ async function getDomains() {
           return -1;
       });
 
-      const user = db.collection('users').doc('user_0');
+      const userRef = db.collection('users').doc(user.uid);
 
-      userData = await user.get();
+      userData = await userRef.get();
 
       return userData.data();
     } else {

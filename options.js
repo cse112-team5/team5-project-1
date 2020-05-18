@@ -37,16 +37,15 @@ function updateDomainProductive(domain, val) {
       var ref = db.collection('users').doc(user.uid);
 
       ref.get().then(function(doc) {
-        
         if (doc.exists) { // user document exists
-            console.log("Document data:", doc.data());
+          console.log("Document data:", doc.data());
         } else { // user document doesn't exist, create it
-            console.log("No such document!");
-            db.collection('users').doc(user.uid).set({
-              domains: {},
-              teamId: null
-            })
-            //return -1;
+          console.log("No such document!");
+          db.collection('users').doc(user.uid).set({
+            domains: {},
+            teamId: null
+          });
+          //return -1;
         }
       }).catch(function(error) { // some error occurred
           console.log("Error getting document:", error);
@@ -60,9 +59,9 @@ function updateDomainProductive(domain, val) {
       userRef.get().then(documentSnapshot => {
         if(documentSnapshot.exists) {
           let data = documentSnapshot.data();
-    
+
           const map = new Map(Object.entries(data["domains"]));
-    
+          
           // update
           if(map.has(domain)) {
             time = data["domains"][domain]["time"];
