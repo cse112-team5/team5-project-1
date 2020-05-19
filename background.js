@@ -461,6 +461,13 @@ chrome.extension.onConnect.addListener(function(port) {
         getInviteCode();
       }
     });
+  } else if(port.name === 'user-data-options'){
+    portUserData = port;
+    portUserData.onMessage.addListener(function(msg) {
+      if (msg.task === 'get-user-id'){
+        getUserId();
+      }
+    });
   }
   else {
     port.onMessage.addListener(function(msg) {
@@ -516,6 +523,15 @@ async function addURL(domain) {
   });
 }
 
+function getUserId() {
+  const user = firebase.auth().currentUser;
+  if(user) {
+    portUserData.postMessage({
+      res: 'logged_in',
+      user_uid: user.uid
+    });
+  }
+}
 function getInviteCode(){
   const db = firebase.firestore();
   const user = firebase.auth().currentUser;

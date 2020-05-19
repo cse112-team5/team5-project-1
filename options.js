@@ -9,11 +9,11 @@
  * Firebase auth object. So, there's no need to pass in user id as a parameter as long as the user is
  * logged in.
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   var link = document.getElementById('link');
   // onClick's logic below:
-  link.addEventListener('click', function() {
-    updateDomainProductive('xxx','xxx');
+  link.addEventListener('click', function () {
+    updateDomainProductive();
   });
 });
 /*
@@ -26,63 +26,57 @@ document.addEventListener('DOMContentLoaded', function() {
  * return
  *      0 upon success, 1 otherwise
  */
-function updateDomainProductive(domain, val) {
+function updateDomainProductive() {
   const db = firebase.firestore();
   // Update for the logged in user
   //
-
-  firebase.auth().onAuthStateChanged(function(user) {
-    if (user) {
-      // User is signed in.
-      var ref = db.collection('users').doc(user.uid);
-
-      ref.get().then(function(doc) {
-        if (doc.exists) { // user document exists
-          console.log("Document data:", doc.data());
-        } else { // user document doesn't exist, create it
-          console.log("No such document!");
-          db.collection('users').doc(user.uid).set({
-            domains: {},
-            teamId: null
-          });
-          //return -1;
-        }
-      }).catch(function(error) { // some error occurred
-        console.log("Error getting document:", error);
-        return -1;
-      });
-
-      const userRef = db.collection("users").doc(user.uid);
+  // Instead of 'user_0', use the uid of the currently logged in user.
+  // In addition, add a check at the beggining of this function, returning
+  // if there is no logged in user
+  //
+  // NOTE: use firebase.auth().currentUser.uid as the identifier
+  const portUserData = chrome.extension.connect({ name: 'user-data-options' });
+  portUserData.postMessage({ task: 'get-user-id' });
+  var uid = "";
+  portUserData.onMessage.addListener((msg) => {
+    console.log("RECEVE", msg);
+    if (msg.res === 'logged_in') {
+      console.log("user logged in");
+      uid = msg.user_uid;
+      console.log(uid);
+      const user = db.collection("users").doc(uid);
       domain = document.getElementById('unproductive_domain').value;
-      val = getRadioVal( document.getElementById('selection'), 'if' );
-      var isTrue = (val == 'true');
-      userRef.get().then(documentSnapshot => {
-        if(documentSnapshot.exists) {
+      var urlParts = domain.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+      var domain = urlParts[0];
+      var val = getRadioVal(document.getElementById('selection'), 'if');
+      var isTrue = (val === 'Productive');
+      user.get().then(documentSnapshot => {
+        if (documentSnapshot.exists) {
           let data = documentSnapshot.data();
 
           const map = new Map(Object.entries(data["domains"]));
 
           // update
-          if(map.has(domain)) {
+          if (map.has(domain)) {
+            console.log("prod");
             time = data["domains"][domain]["time"];
             visits = data["domains"][domain]["visits"];
-            data["domains"][domain] = {productive: isTrue, time: time, visits: visits};
-            userRef.set(data);
+            data["domains"][domain] = { productive: isTrue, time: time, visits: visits };
+            user.set(data);
+            window.alert("Domain added successfully");
+            return 0;
           }
           // add
-          else{
-            data["domains"][domain] = {productive: isTrue, time: 0, visits: 0};
-            userRef.set(data);
+          else {
+            console.log("unprod");
+            data["domains"][domain] = { productive: isTrue, time: 0, visits: 0 };
+            user.set(data);
           }
         }
       });
-      window.alert("Domain added successfully");
-      return 0;
-
-    } else {
-      // No user is signed in.
-      console.log("no user signed in");
-      return 1;
+    }
+    else {
+      console.log("user not logged in");
     }
   });
 }
@@ -94,8 +88,8 @@ function getRadioVal(form, name) {
   var radios = form.elements[name];
 
   // loop through list of radio buttons
-  for(var i=0, len=radios.length; i<len; i++) {
-    if(radios[i].checked) { // radio checked?
+  for (var i = 0, len = radios.length; i < len; i++) {
+    if (radios[i].checked) { // radio checked?
       val = radios[i].value; // if so, hold its value in val
       break; // and break out of for loop
     }
