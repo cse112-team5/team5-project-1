@@ -430,7 +430,6 @@ function addURL(domain) {
 }
 
 function getUserId() {
-  const db = firebase.firestore();
   const user = firebase.auth().currentUser;
   if(user) {
     portUserData.postMessage({
