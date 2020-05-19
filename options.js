@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var link = document.getElementById('link');
   // onClick's logic below:
   link.addEventListener('click', function () {
-    updateDomainProductive('xxx', 'xxx');
+    updateDomainProductive();
   });
 });
 /*
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
  * return
  *      0 upon success, 1 otherwise
  */
-function updateDomainProductive(domain, val) {
+function updateDomainProductive() {
   const db = firebase.firestore();
   // TODO (Madhav, Xianhai)
   // Update for the logged in user
@@ -48,8 +48,8 @@ function updateDomainProductive(domain, val) {
       const user = db.collection("users").doc(uid);
       domain = document.getElementById('unproductive_domain').value;
       var urlParts = domain.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
-      domain = urlParts[0];
-      val = getRadioVal(document.getElementById('selection'), 'if');
+      var domain = urlParts[0];
+      var val = getRadioVal(document.getElementById('selection'), 'if');
       var isTrue = (val === 'Productive');
       user.get().then(documentSnapshot => {
         if (documentSnapshot.exists) {
@@ -64,6 +64,8 @@ function updateDomainProductive(domain, val) {
             visits = data["domains"][domain]["visits"];
             data["domains"][domain] = { productive: isTrue, time: time, visits: visits };
             user.set(data);
+            window.alert("Domain added successfully");
+            return 0;
           }
           // add
           else {
@@ -73,8 +75,6 @@ function updateDomainProductive(domain, val) {
           }
         }
       });
-      window.alert("Domain added successfully");
-      return 0;
     }
     else {
       console.log("user not logged in");
