@@ -64,19 +64,35 @@ function compareTime(a, b) {
 
 async function getDomains() {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-  const user = db.collection('users').doc('user_0');
+  firebase.auth().onAuthStateChanged(async function(user) {
+    if (user) {
+      // User is signed in.
 
-  userData = await user.get();
+      var docRef = db.collection('users').doc(user.uid);
 
-  return userData.data();
+      docRef.get().then(function(doc) {
+        if (doc.exists) { // user document exists
+          console.log("Document data:", doc.data());
+        } else { // user document doesn't exist
+          console.log("No such document!");
+          db.collection('users').doc(user.uid).set({
+            domains: {},
+            teamId: null
+          });
+        }
+      }).catch(function(error) { // some error occurred
+        console.log("Error getting document:", error);
+      });
+
+      return (await docRef.get().data());
+    } else {
+      console.log("getDomains not logged in");
+      // No user is signed in.
+    }
+  });
+
 }
 
 const updateProductivity = () => {

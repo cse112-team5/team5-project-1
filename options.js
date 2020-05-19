@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 function updateDomainProductive() {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -80,7 +79,6 @@ function updateDomainProductive() {
       console.log("user not logged in");
     }
   });
-
 }
 
 //helper function to get user selection
