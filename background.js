@@ -81,9 +81,23 @@ const createUser = () => {
   const user = firebase.auth().currentUser;
   if (!user) return;
 
-  // TODO replace with Madhav's code
+  var ref = db.collection('users').doc(user.uid);
 
+  ref.get().then(function(doc) {
 
+    if (doc.exists) { // user document exists
+      handleProductivity();
+    } else { // user document doesn't exist, create it
+      console.log("No doc found! Creating doc for user.");
+      db.collection('users').doc(user.uid).set({
+        domains: {},
+        teamId: null
+      });
+    }
+  }).catch(function(error) { // some error occurred
+    console.log("Error getting document:", error);
+    return -1;
+  });
 };
 
 /*
@@ -115,40 +129,62 @@ const incrementDomainActivity = (domain, increment) => {
   if (domain.length === 0) return -1;
 
   const db = firebase.firestore();
-
   var vis = -1;
   var tim = 0;
   var prod = false;
 
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-  db.collection('users').doc('user_0').get().then((snapshot) => {
-    var domains = snapshot.data()["domains"];
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
 
-    if (domain in domains) {
-      vis = domains[domain]["visits"];
-      tim = domains[domain]["time"];
-      prod = domains[domain]["productive"];
+      var ref = db.collection('users').doc(user.uid);
+
+      ref.get().then(function(doc) {
+
+        if (doc.exists) { // user document exists
+          console.log("Document data:", doc.data());
+        } else { // user document doesn't exist, create it
+          console.log("No doc found! Creating doc for user.");
+          db.collection('users').doc(user.uid).set({
+            domains: {},
+            teamId: null
+          });
+          //return -1;
+        }
+      }).catch(function(error) { // some error occurred
+        console.log("Error getting document:", error);
+        return -1;
+      });
+
+      // User is signed in.
+      db.collection('users').doc(user.uid).get().then((snapshot) => {
+        var domains = snapshot.data()["domains"];
+
+        if (domain in domains) {
+          vis = domains[domain]["visits"];
+          tim = domains[domain]["time"];
+          prod = domains[domain]["productive"];
+        }
+        else {
+          vis = 0;
+          tim = 0;
+          prod = true;
+        }
+
+        var sitesList = snapshot.data();
+
+        var userRef = db.collection("users").doc(user.uid);
+        console.log("incrementing activity time for " + domain + " by " + increment);
+        sitesList["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
+        userRef.set(sitesList);
+        return 0;
+      });
+    } else {
+      // No user is signed in.
+      console.log("not logged in");
+      return 1;
     }
-    else {
-      vis = 0;
-      tim = 0;
-      prod = true;
-    }
-
-    var sitesList = snapshot.data();
-
-    var userRef = db.collection("users").doc("user_0");
-    console.log("incrementing activity time for " + domain + " by " + increment);
-    sitesList["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
-    userRef.set(sitesList);
-    return 0;
   });
 };
 
@@ -169,36 +205,57 @@ const incrementDomainVisits = (domain) => {
   var vis = -1;
   var tim = 0;
   var prod = false;
-  // TODO (Madhav, Xianhai)
+
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-  db.collection('users').doc('user_0').get().then((snapshot) => {
-    var domains = snapshot.data()["domains"];
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // User is signed in.
+      var ref = db.collection('users').doc(user.uid);
 
-    if (domain in domains) {
-      vis = domains[domain]["visits"];
-      tim = domains[domain]["time"];
-      prod = domains[domain]["productive"];
+      ref.get().then(function(doc) {
+        if (doc.exists) { // user document exists
+          console.log("Document data:", doc.data());
+        } else { // user document doesn't exist
+          console.log("No doc found! Creating doc for user.");
+          db.collection('users').doc(user.uid).set({
+            domains: {},
+            teamId: null
+          });
+        }
+      }).catch(function(error) { // some error occurred
+        console.log("Error getting document:", error);
+        return -1;
+      });
+
+      db.collection('users').doc(user.uid).get().then((snapshot) => {
+        var domains = snapshot.data()["domains"];
+
+        if (domain in domains) {
+          vis = domains[domain]["visits"];
+          tim = domains[domain]["time"];
+          prod = domains[domain]["productive"];
+        }
+        else {
+          vis = 1;
+          tim = 0;
+          prod = true;
+        }
+
+        var sitesList = snapshot.data();
+
+        console.log("incrementing visits for " + domain);
+        var userRef = db.collection("users").doc(user.uid);
+        sitesList["domains"][domain] = { time: tim, productive: prod, visits: vis + 1 };
+        userRef.set(sitesList);
+        return 0;
+      });
+    } else {
+      // No user is signed in.
+      console.log("not signed in");
     }
-    else {
-      vis = 1;
-      tim = 0;
-      prod = true;
-    }
-
-    var sitesList = snapshot.data();
-
-    console.log("incrementing visits for " + domain);
-    var userRef = db.collection("users").doc("user_0");
-    sitesList["domains"][domain] = { time: tim, productive: prod, visits: vis + 1 };
-    userRef.set(sitesList);
-    return 0;
   });
+  return 0;
 };
 
 /*
@@ -215,22 +272,29 @@ const incrementDomainVisits = (domain) => {
  * return
  *      0.0 - 100.0 upon success, -1 otherwise
  */
-const getProductivity = async () => {
+const getProductivity = async (user) => {
   const db = firebase.firestore();
-
-  // TODO (Madhav, Xianhai)
+  var snapshot;
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-  var snapshot = await db.collection('users').doc('user_0').get();
+  var docRef = db.collection('users').doc(user.uid);
 
+  docRef.get().then(function(doc) {
+    if (doc.exists) { // user document exists
+      console.log("Document data:", doc.data());
+    } else { // user document doesn't exist
+      db.collection('users').doc(user.uid).set({
+        domains: {},
+        teamId: null
+      });
+    }
+  }).catch(function(error) { // some error occurred
+    console.log("Error getting document:", error);
+    return -1;
+  });
 
+  snapshot = await db.collection('users').doc(user.uid).get();
   var domains = snapshot.data()["domains"];
-
   var keys = Object.keys(domains);
 
   var totalTime = 0;
@@ -262,6 +326,7 @@ var map = new Map();
 var domainsToUpdate = new Map();
 
 const updateDatabaseWithDomainTimes = () =>{
+
   const currTime = new Date();
   if (map.has(curPage.domain)){
     const oldTime = map.get(curPage.domain);
@@ -289,20 +354,30 @@ const updateDatabaseWithDomainTimes = () =>{
   domainsToUpdate = new Map(); // clear list
 };
 
-async function getDomains() {
+async function getDomains(user) {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
-  // Instead of 'user_0', use the uid of the currently logged in user.
-  // In addition, add a check at the beggining of this function, returning
-  // if there is no logged in user
-  //
-  // NOTE: use firebase.auth().currentUser.uid as the identifier
-  const user = db.collection('users').doc('user_0');
+  var docRef = db.collection('users').doc(user.uid);
 
-  userData = await user.get();
+  docRef.get().then(function(doc) {
 
+    if (doc.exists) { // user document exist
+      console.log("Document data:", doc.data());
+    } else { // user document doesn't exist
+      console.log("No doc found! Creating doc for user.");
+      db.collection('users').doc(user.uid).set({
+        domains: {},
+        teamId: null
+      });
+    }
+  }).catch(function(error) { // some error occurred
+    console.log("Error getting document:", error);
+    return -1;
+  });
+
+  const userRef = db.collection('users').doc(user.uid);
+  userData = await userRef.get();
   return userData.data();
 }
 
@@ -395,29 +470,48 @@ chrome.extension.onConnect.addListener(function(port) {
   }
 });
 
-function addURL(domain) {
-  sitesList = getDomains();
-  console.log(domain);
-  sitesList.then(sitesList_ => {
-    tempMap = new Map(Object.entries(sitesList_["domains"]));
+async function addURL(domain) {
+  firebase.auth().onAuthStateChanged(async function(user) {
+    if (user) {
+      // User is signed in.
+      sitesList = await getDomains(user);
+      console.log(domain);
+      sitesList.then(sitesList_ => {
+        tempMap = new Map(Object.entries(sitesList_["domains"]));
 
-    if (!tempMap.has(domain)) {
-      const db = firebase.firestore();
-      // TODO (Madhav, Xianhai)
-      // Update for the logged in user
-      //
-      // Instead of 'user_0', use the uid of the currently logged in user.
-      // In addition, add a check at the beggining of this function, returning
-      // if there is no logged in user
-      //
-      // NOTE: use firebase.auth().currentUser.uid as the identifier
-      var userRef = db.collection("users").doc("user_0");
-      //var domainString = "domains." + domain;
-      sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
-      userRef.set(sitesList_);
-    }
-    else {
-      incrementDomainVisits(domain);
+        if (!tempMap.has(domain)) {
+          const db = firebase.firestore();
+          // Update for the logged in user
+          //
+          var docRef = db.collection('users').doc(user.uid);
+
+          docRef.get().then(function(doc) {
+            if (doc.exists) { // user document exists
+              console.log("Document data:", doc.data());
+            } else { // user document doesn't exist
+              console.log("No doc found! Creating doc for user.");
+              db.collection('users').doc(user.uid).set({
+                domains: {},
+                teamId: null
+              });
+            }
+          }).catch(function(error) { // some error occurred
+            console.log("Error getting document:", error);
+            return -1;
+          });
+
+          const userRef = db.collection('users').doc(user.uid);
+          sitesList_["domains"][domain] = { time: 0, productive: false, visits: 1 };
+          userRef.set(sitesList_);
+
+        }
+        else {
+          incrementDomainVisits(domain);
+        }
+      });
+    } else {
+      // No user is signed in.
+      console.log("not logged in, can't add URL");
     }
   });
 }
@@ -461,9 +555,17 @@ function getInviteCode(){
 
 // update the productivity periodically
 const handleProductivity = async () => {
-  const newProd = await getProductivity();
-  console.log("NEW PROD " + newProd);
-  chrome.storage.sync.set({productivity: newProd});
+  firebase.auth().onAuthStateChanged(async function(user) {
+    if (user) {
+      // User is signed in.
+      const newProd = await getProductivity(user);
+      console.log("NEW PROD " + newProd);
+      chrome.storage.sync.set({productivity: newProd});
+    } else {
+      // No user is signed in.
+      console.log("not logged in");
+    }
+  });
 };
 
 /*
