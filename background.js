@@ -81,9 +81,23 @@ const createUser = () => {
   const user = firebase.auth().currentUser;
   if (!user) return;
 
-  // TODO replace with Madhav's code
+  var ref = db.collection('users').doc(user.uid);
 
+  ref.get().then(function(doc) {
 
+    if (doc.exists) { // user document exists
+      handleProductivity();
+    } else { // user document doesn't exist, create it
+      console.log("No doc found! Creating doc for user.");
+      db.collection('users').doc(user.uid).set({
+        domains: {},
+        teamId: null
+      });
+    }
+  }).catch(function(error) { // some error occurred
+    console.log("Error getting document:", error);
+    return -1;
+  });
 };
 
 /*
@@ -131,7 +145,7 @@ const incrementDomainActivity = (domain, increment) => {
         if (doc.exists) { // user document exists
           console.log("Document data:", doc.data());
         } else { // user document doesn't exist, create it
-          console.log("No such document!");
+          console.log("No doc found! Creating doc for user.");
           db.collection('users').doc(user.uid).set({
             domains: {},
             teamId: null
@@ -203,7 +217,7 @@ const incrementDomainVisits = (domain) => {
         if (doc.exists) { // user document exists
           console.log("Document data:", doc.data());
         } else { // user document doesn't exist
-          console.log("No such document!");
+          console.log("No doc found! Creating doc for user.");
           db.collection('users').doc(user.uid).set({
             domains: {},
             teamId: null
@@ -351,7 +365,7 @@ async function getDomains(user) {
     if (doc.exists) { // user document exist
       console.log("Document data:", doc.data());
     } else { // user document doesn't exist
-      console.log("No such document!");
+      console.log("No doc found! Creating doc for user.");
       db.collection('users').doc(user.uid).set({
         domains: {},
         teamId: null
@@ -475,7 +489,7 @@ async function addURL(domain) {
             if (doc.exists) { // user document exists
               console.log("Document data:", doc.data());
             } else { // user document doesn't exist
-              console.log("No such document!");
+              console.log("No doc found! Creating doc for user.");
               db.collection('users').doc(user.uid).set({
                 domains: {},
                 teamId: null
