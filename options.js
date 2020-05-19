@@ -67,7 +67,7 @@ function updateDomainProductive(domain, val) {
           }
           // add
           else {
-            console.log("unprod")
+            console.log("unprod");
             data["domains"][domain] = { productive: isTrue, time: 0, visits: 0 };
             user.set(data);
           }
