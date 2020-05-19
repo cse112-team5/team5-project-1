@@ -55,30 +55,29 @@ async function getDomains() {
   const db = firebase.firestore();
   // Update for the logged in user
   //
-  firebase.auth().onAuthStateChanged(function(user) {
+  firebase.auth().onAuthStateChanged(async function(user) {
     if (user) {
       // User is signed in.
 
       var docRef = db.collection('users').doc(user.uid);
 
       docRef.get().then(function(doc) {
-        
         if (doc.exists) { // user document exists
-            console.log("Document data:", doc.data());
+          console.log("Document data:", doc.data());
         } else { // user document doesn't exist
-            console.log("No such document!");
-            db.collection('users').doc(user.uid).set({
-              domains: {},
-              teamId: null
-            });
+          console.log("No such document!");
+          db.collection('users').doc(user.uid).set({
+            domains: {},
+            teamId: null
+          });
         }
       }).catch(function(error) { // some error occurred
-          console.log("Error getting document:", error);
+        console.log("Error getting document:", error);
       });
 
       return (await docRef.get().data());
     } else {
-      console.log("getDomains not logged in")
+      console.log("getDomains not logged in");
       // No user is signed in.
     }
   });
