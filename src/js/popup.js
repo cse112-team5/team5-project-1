@@ -19,12 +19,7 @@ var currentScreen = SCREEN_MY_STATS;
 // port for authentication related communication
 const portAuth = chrome.extension.connect({ name: 'auth' });
 portAuth.onMessage.addListener((msg) => {
-  if (msg.res === 'logged-in') {
-    userLoggedIn = true;
-    userEmail = msg.email;
-    userUid = msg.uid;
-    renderHome();
-  }
+  // nothing here for now
 });
 
 
@@ -143,7 +138,7 @@ const showMyStats = () => {
   // update user's productivity score
   const productivityScoreElement = document.getElementsByClassName('stats-productivity-val')[0];
   if (userContext.productivity)
-    productivityScoreElement.innerHTML = userContext.productivity + "%";
+    productivityScoreElement.innerHTML = userContext.productivity.toFixed(1) + "%";
   else
     productivityScoreElement.innerHTML = "N/A";
 

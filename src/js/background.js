@@ -152,12 +152,13 @@ const updateStats = async () => {
     return;
   }
 
+  console.log('[NOTE] updateStates: updating');
   // user is signed in.
   const newStats = await getUserStats();
+  if (!newStats) return;
 
   // this can be null, which should display as "N/A" in popup.js
   userContext.productivity = newStats.productivity;
-  console.log("NEW STATE", newStats);
   userContext.domains = sortDomains(newStats.domains);
 
   sendContext();

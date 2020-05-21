@@ -19,10 +19,9 @@
 var portAuth = null;
 var portUserData = null;
 var portUserDataOptions = null;
-var portUserData = null;
+var portTeamData = null;
 
 chrome.extension.onConnect.addListener(function(port) {
-  console.log("NAME ?",port.name, port.name === 'auth');
   if (port.name === 'auth') {
     portAuth = port;
     portAuth.onMessage.addListener(function(msg) {
@@ -70,12 +69,6 @@ chrome.extension.onConnect.addListener(function(port) {
 
     portTeamData.onDisconnect.addListener(() => portTeamData = null);
   }
-  else {
-    port.onMessage.addListener(function(msg) {
-      console.log("background message recieved " + msg);
-      port.postMessage(curPage.domain);
-    });
-  }
 });
 
 
@@ -85,23 +78,7 @@ chrome.extension.onConnect.addListener(function(port) {
 
 const loginGmail = () => {
   firebase.auth().signInWithPopup(provider).then((result) => {
-    var user = result.user;
-    console.log('Logged in', user);
-    if (portAuth)
-      portAuth.postMessage({
-        res: 'logged-in',
-        email: user.email, uid: user.uid
-      });
-
-    // TODO Thomas, Jason
-    // I've removed the firebase ui since background.js is now in charge of
-    // launching gmail popups. I couldn't figure out how to get firebaseui to
-    // delegate that task to background.js. According to
-    // https://firebase.google.com/docs/auth/web/google-signin#authenticate_with_firebase_in_a_chrome_extension
-    // we should be making our signin call in background.js anyways.
-    //
-    // you can move whatever logic you had in that callback function in that ui
-    // config here.
+    console.log('[NOTE] loginGmail: Logged in', user);
   }).catch((error) => {
     // Handle Errors here.
     var errorCode = error.code;
