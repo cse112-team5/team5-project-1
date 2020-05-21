@@ -20,3 +20,16 @@ function generateId(len) {
     code.push(alphanum[Math.floor(Math.random() * n)])
   return code.join('')
 }
+
+// TODO
+// these two functions below shouldnt be here ...
+// they're too project dependant, but whatever
+// find a better home for them when you've got the time
+function sortDomains(data) {
+  tempMap = new Map(Object.entries(data));
+  return [...tempMap.entries()].sort(compareTime);
+}
+
+function compareTime(a, b) {
+  return b[1].time - a[1].time;
+}

@@ -1,10 +1,11 @@
-
 /*
  * Globals
  */
 
+
 var teamContext = null;
 var userContext = null;
+
 
 /*
  * Firebase response handlers
@@ -20,14 +21,24 @@ const initApp = () => {
     userContext = await createUser();
     if (userContext.teamId)
       teamContext = await getTeam(userContext.teamId);
+
+    // add handlers to keep data up to date
+    setInterval(updateStats, 5000);
+    // NOTE if you decrease this timer while testing,
+    // be sure to bring it back up later
+    setInterval(updateDatabaseWithDomainTimes, 60000);
+    chrome.tabs.onUpdated.addListener(handleUpdate);
+    chrome.tabs.onActivated.addListener(handleChangeTab);
+
+    sendContext();
   });
 }
-
 
 
 /*
  * Client side functions
  */
+
 
 var curPage = {};
 var map = new Map();
@@ -51,11 +62,9 @@ const updateDatabaseWithDomainTimes = () =>{
   }
 
   curPage.begin = currTime; // reset start time for current active domain
-  console.log(domainsToUpdate);
+  console.log("[NOTE] updateDatabaseWithDomainTimes: Updating the following domains:", domainsToUpdate);
   domainsToUpdate.forEach((increment, domain, map) => {
     // convert to seconds
-    console.log("DOM " + domain);
-    //TODO figure out why domain is undefined
     if (domain === undefined || domain === null) return;
     incrementDomainActivity(domain, Math.floor(increment / 1000));
   });
@@ -137,30 +146,27 @@ async function addURL(domain) {
 
 
 // update the productivity periodically
-const handleProductivity = async () => {
-  firebase.auth().onAuthStateChanged(async function(user) {
-    if (user) {
-      // User is signed in.
-      const newProd = await getProductivity(user);
-      console.log("NEW PROD " + newProd);
-      chrome.storage.sync.set({productivity: newProd});
-    } else {
-      // No user is signed in.
-      console.log("not logged in");
-    }
-  });
+const updateStats = async () => {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    return;
+  }
+
+  // user is signed in.
+  const newStats = await getUserStats();
+
+  // this can be null, which should display as "N/A" in popup.js
+  userContext.productivity = newStats.productivity;
+  console.log("NEW STATE", newStats);
+  userContext.domains = sortDomains(newStats.domains);
+
+  sendContext();
 };
+
 
 /*
  * Other initializations
  */
-
-
-// updates database every minute; only reduce time for testing as there will be many writes
-//setInterval(handleProductivity, 3000);
-//setInterval(updateDatabaseWithDomainTimes, 60000);
-chrome.tabs.onUpdated.addListener(handleUpdate);
-chrome.tabs.onActivated.addListener(handleChangeTab);
 
 
 window.onload = function () {

@@ -19,6 +19,7 @@
 var portAuth = null;
 var portUserData = null;
 var portUserDataOptions = null;
+var portUserData = null;
 
 chrome.extension.onConnect.addListener(function(port) {
   console.log("NAME ?",port.name, port.name === 'auth');
@@ -29,21 +30,30 @@ chrome.extension.onConnect.addListener(function(port) {
         loginGmail();
       }
     });
-  } else if (port.name === 'user-data'){
+
+    portAuth.onDisconnect.addListener(() => portAuth = null);
+  }
+  else if (port.name === 'user-data'){
     portUserData = port;
     portUserData.onMessage.addListener(function(msg) {
       if (msg.task === 'get-context'){
         sendContext();
       }
     });
-  } else if(port.name === 'user-data-options'){
+
+    portUserData.onDisconnect.addListener(() => portUserData = null);
+  }
+  else if(port.name === 'user-data-options'){
     portUserDataOptions = port;
     portUserDataOptions.onMessage.addListener(function(msg) {
       if (msg.task === 'get-user-id'){
         getUserId();
       }
     });
-  } else if(port.name === 'team-data'){
+
+    portUserDataOptions.onDisconnect.addListener(() => portUserDataOptions = null);
+  }
+  else if(port.name === 'team-data'){
     portTeamData = port;
     portTeamData.onMessage.addListener(function(msg) {
       if (msg.task === 'create-team'){
@@ -57,6 +67,8 @@ chrome.extension.onConnect.addListener(function(port) {
 
       }
     });
+
+    portTeamData.onDisconnect.addListener(() => portTeamData = null);
   }
   else {
     port.onMessage.addListener(function(msg) {
@@ -75,10 +87,11 @@ const loginGmail = () => {
   firebase.auth().signInWithPopup(provider).then((result) => {
     var user = result.user;
     console.log('Logged in', user);
-    portAuth.postMessage({
-      res: 'logged-in',
-      email: user.email, uid: user.uid
-    });
+    if (portAuth)
+      portAuth.postMessage({
+        res: 'logged-in',
+        email: user.email, uid: user.uid
+      });
 
     // TODO Thomas, Jason
     // I've removed the firebase ui since background.js is now in charge of
@@ -108,6 +121,8 @@ const sendContext = () => {
   const user = firebase.auth().currentUser;
   var email = null;
   var uid = null;
+  var userProductivity = null;
+  var userDomains = null;
   var teamId = null;
   var teamName = null;
   var teamInviteCode = null;
@@ -116,6 +131,8 @@ const sendContext = () => {
   if (user) {
     email = user.email;
     uid = user.uid;
+    userProductivity = userContext.productivity;
+    userDomains = userContext.domains;
   }
 
   // team info if part of team
@@ -125,11 +142,16 @@ const sendContext = () => {
     teamInviteCode = teamContext.inviteCode;
   }
 
-  portUserData.postMessage({
-    res: 'send-context',
-    loggedIn: user !== null, email: email, uid: uid,
-    teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode,
-  });
+  if (portUserData)
+    portUserData.postMessage({
+      res: 'send-context',
+      loggedIn: user !== null,
+      email: email,
+      uid: uid,
+      userProductivity: userProductivity,
+      userDomains: userDomains,
+      teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode,
+    });
 };
 
 /*
@@ -138,10 +160,11 @@ const sendContext = () => {
 function getUserId() {
   const user = firebase.auth().currentUser;
   if(user) {
-    portUserDataOptions.postMessage({
-      res: 'logged_in',
-      user_uid: user.uid
-    });
+    if (portUserDataOptions)
+      portUserDataOptions.postMessage({
+        res: 'logged_in',
+        user_uid: user.uid
+      });
   }
 }
 

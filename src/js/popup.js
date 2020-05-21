@@ -9,9 +9,8 @@ var userUid = undefined;
 var teamContext = null;
 var userContext = null;
 
-/*
- * Firebase initializations
- */
+var currentDomain = null;
+var currentScreen = SCREEN_MY_STATS;
 
 /*
  * Messaging logistics
@@ -39,9 +38,14 @@ const handleLoginGmail = () => {
 // port for user data related communication
 const portUserData = chrome.extension.connect({ name: 'user-data' });
 portUserData.onMessage.addListener((msg) => {
-  console.log("CONTEXT GET");
   if (msg.res === 'send-context') {
-    userContext = { loggedIn: msg.loggedIn, id: msg.uid, email: msg.email };
+    userContext = {
+      loggedIn: msg.loggedIn,
+      id: msg.uid,
+      email: msg.email,
+      productivity: msg.userProductivity,
+      domains: msg.userDomains,
+    };
     teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode };
     refresh();
   }
@@ -55,41 +59,13 @@ const getContext = () => {
 // port for team data related information
 const portTeamData = chrome.extension.connect({ name: 'team-data' });
 portTeamData.onMessage.addListener((msg) => {
-  if (msg.res === 'res-create-team') {
-    createTeamResHandler();
-  }
-  else if (msg.res === 'res-join-team') {
-    joinTeamResHandler();
-  }
-  else if (msg.res === 'res-leave-team') {
-    leaveTeamResHandler();
-  }
+  // nothing for now
 });
 
-//ui.start('#firebaseui-auth-container', uiConfig);
 
 /*
- * Client side functions
+ * Client UI handlers
  */
-
-
-function compareTime(a, b) {
-  return b[1].time - a[1].time;
-}
-
-
-const updateProductivity = () => {
-  //TODO calculate productivity with an API instead of dummy values
-  chrome.storage.sync.get('productivity', (data) => {
-    console.log(data);
-    if (Object.keys(data).length === 0 || data.productivity < 0) {
-      document.getElementById('p_score').innerHTML = "N/A";
-    }
-    else {
-      document.getElementById('p_score').innerHTML = data.productivity + "%";
-    }
-  });
-};
 
 
 function updateCurrentDomain(){
@@ -98,37 +74,9 @@ function updateCurrentDomain(){
     // regex to split url from domain
     let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
     let domain = matches && matches[1];
-    this.document.getElementById('domain').innerHTML = domain;
+    currentDomain = domain;
   });
 }
-
-function sortDomains(data) {
-  tempMap = new Map(Object.entries(data["domains"]));
-  return [...tempMap.entries()].sort(compareTime);
-}
-
-function updateSites(sitesList) {
-  sitesList.then(sitesList_ => {
-    sortedDomains = sortDomains(sitesList_);
-
-    console.log(sortedDomains);
-
-    var MAX_SITES = 5;
-    var numSites = sortedDomains.length < MAX_SITES ? sortedDomains.length : MAX_SITES;
-
-    var list = document.createElement('ol');
-    for (var i = 0; i < numSites; i++) {
-      var item = document.createElement('li');
-      item.appendChild(document.createTextNode(sortedDomains[i][0]));
-      list.appendChild(item);
-    };
-
-    document.getElementById("topsites").innerHTML = "Top " + numSites + " visted sites";
-    document.getElementById('sitesList').appendChild(list);
-  });
-
-}
-
 
 function joinTeamHandler() {
   const inviteCode = document.getElementById("invite-code").value;
@@ -138,30 +86,33 @@ function joinTeamHandler() {
   portTeamData.postMessage({ task: 'join-team', inviteCode: inviteCode });
 }
 
-function joinTeamResHandler(teamId, inviteCode) {
-  showInviteCode();
-  hideTeamFormation();
-}
-
 function createTeamHandler() {
   console.log("CREATE TEAM");
   const teamName = document.getElementById('new-team-name').value;
   portTeamData.postMessage({ task: 'create-team', teamName: teamName });
 }
 
-function createTeamResHandler(teamId, inviteCode) {
-  showInviteCode();
-  hideTeamFormation();
-}
-
 function leaveTeamHandler(){
   portTeamData.postMessage({ task: 'leave-team' });
 }
 
-function leaveTeamResHandler() {
-  hideInviteCode();
-  showTeamFormation();
+// TODO figure out a way to consolidate this into one function,
+// that way we can switch over the argument rather than having
+// seperate functions for each screen
+const switchScreenMyTeamHandler = () => {
+  currentScreen = SCREEN_MY_TEAM;
+  refresh();
 }
+
+const switchScreenMyStatsHandler = () => {
+  currentScreen = SCREEN_MY_STATS;
+  refresh();
+}
+
+/*
+ * Element rendering togglers
+ */
+
 
 function showInviteCode(){
   const teamInfo = document.getElementsByClassName('team-info')[0];
@@ -175,16 +126,66 @@ function hideInviteCode() {
   teamInfo.style.display = "none";
 }
 
-function hideTeamFormation() {
-  const teamFormation = document.getElementById("team-formation");
-  teamFormation.style.display = "none";
-}
-
 function showTeamFormation(){
   const teamFormation = document.getElementById("team-formation");
   teamFormation.style.display = "block";
 }
 
+function hideTeamFormation() {
+  const teamFormation = document.getElementById("team-formation");
+  teamFormation.style.display = "none";
+}
+
+const showMyStats = () => {
+  const myStatsElement = document.getElementsByClassName('my-stats')[0];
+  myStatsElement.style.display = "block";
+
+  // update user's productivity score
+  const productivityScoreElement = document.getElementsByClassName('stats-productivity-val')[0];
+  if (userContext.productivity)
+    productivityScoreElement.innerHTML = userContext.productivity + "%";
+  else
+    productivityScoreElement.innerHTML = "N/A";
+
+  // update to display the current domain
+  if (currentDomain) {
+    this.document.getElementsByClassName('stats-cur-domain-val')[0].innerHTML = currentDomain;
+  }
+
+  // update the list of top sites
+  if (userContext.domains) {
+    var numSites = userContext.domains.length < MAX_SITES_LIST_LEN ?
+      userContext.domains.length : MAX_SITES_LIST_LEN;
+
+    var list = document.createElement('ol');
+    for (var i = 0; i < numSites; i++) {
+      var item = document.createElement('li');
+      item.appendChild(document.createTextNode(userContext.domains[i][0]));
+      list.appendChild(item);
+    };
+
+    document.getElementsByClassName('stats-top-sites')[0].innerHTML = 'Top ' + numSites + ' visted sites:';
+
+    // clears pre-existing list
+    document.getElementsByClassName('stats-top-sites-val')[0].innerHTML = '';
+    document.getElementsByClassName('stats-top-sites-val')[0].appendChild(list);
+  }
+}
+
+const hideMyStats = () => {
+  const myStatsElement = document.getElementsByClassName('my-stats')[0];
+  myStatsElement.style.display = 'none';
+}
+
+const showScreenTabs = () => {
+  const screenTabsElement = document.getElementsByClassName('screen-tabs')[0];
+  screenTabsElement.style.display = 'block';
+}
+
+const hideScreenTabs = () => {
+  const screenTabsElement = document.getElementsByClassName('screen-tabs')[0];
+  screenTabsElement.style.display = 'none';
+}
 
 /*
  * HTML rendering
@@ -196,48 +197,77 @@ const refresh = () => {
   const userInfo = document.getElementsByClassName('user-info')[0];
 
   if (userContext.loggedIn) {
+    // display the screen tabs
+    showScreenTabs();
+
     // we're logged in, so display the user info
     loginOptions.style.display = "none";
     userInfo.style.display = "block";
-    document.getElementsByClassName('result-email')[0].innerHTML = userContext.email;
-    document.getElementsByClassName('result-uid')[0].innerHTML = userContext.id;
+    document.getElementsByClassName('result-email')[0].innerHTML = "Logged in as: " + userContext.email;
 
-    if (teamContext.id) {
+    console.log("REFRESH", currentScreen);
+    if (currentScreen === SCREEN_MY_STATS) {
+      // display the user's stats
+      showMyStats();
       hideTeamFormation();
-      showInviteCode();
+      hideInviteCode();
     }
     else {
-      showTeamFormation();
-      hideInviteCode();
+      // show our current team if we're part of one, otherwise show the 
+      // team formation elements
+      if (teamContext.id) {
+        hideTeamFormation();
+        showInviteCode();
+      }
+      else {
+        showTeamFormation();
+        hideInviteCode();
+      }
+
+      hideMyStats();
     }
   }
   else {
+    // hide the screen tabs
+    hideScreenTabs();
+
     // we're not logged in, so display the login options
     loginOptions.style.display = "block";
     userInfo.style.display = "none";
 
     hideTeamFormation();
     hideInviteCode();
+
+    // hide the user's stats
+    hideMyStats();
   }
 };
 
-const initializeListeners = () => {
+const initialize = () => {
+  // initialize html element listeners
+  document.getElementsByClassName('screen-tabs-my-stats')[0].addEventListener('click', switchScreenMyStatsHandler);
+  document.getElementsByClassName('screen-tabs-my-team')[0].addEventListener('click', switchScreenMyTeamHandler);
   document.getElementById("leave-team-button").addEventListener("click", leaveTeamHandler);
   document.getElementById("new-team").addEventListener("click", createTeamHandler);
   document.getElementById("join-team").addEventListener("click", joinTeamHandler);
   document.getElementsByClassName('login-email')[0].addEventListener('click', handleLoginEmail);
   document.getElementsByClassName('login-gmail')[0].addEventListener('click', handleLoginGmail);
+
+  // other initializations
+  updateCurrentDomain();
 }
 
-//chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 
 window.onload = function () {
-  updateProductivity();
-  updateCurrentDomain();
+  // TODO: do we need this?
+  // what's the difference between this and the listener for
+  // DOMContentLoaded?
 };
 
-getContext();
-
+// initialize some handlers when the DOM has loaded
 document.addEventListener('DOMContentLoaded', function () {
-  initializeListeners();
+  initialize();
 });
+
+// request initial context when the popup is loading
+getContext();

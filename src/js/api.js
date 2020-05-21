@@ -27,7 +27,7 @@ const createUser = async () => {
 
     if (userDoc.exists) {
       // user document exists
-      return { id: userDoc.id, teamId: userDoc.data().teamId };
+      return { id: userDoc.id, teamId: userDoc.data().teamId, domains: sortDomains(userDoc.data().domains) };
     } else { // user document doesn't exist, create it
       console.log("[NOTE] createUser: User doesn't exist. Creating doc for user.");
       db.collection('users').doc(user.uid).set({
@@ -215,7 +215,7 @@ const incrementDomainVisits = (domain) => {
 };
 
 /*
- * Calculates the productivity score of the user
+ * Calculates the productivity score and retrieves domains for user
  *
  * To calculate the productivity score, first retreive the domain map from
  * Firebase. Then, divide the total time spend on productive sites by the
@@ -226,32 +226,28 @@ const incrementDomainVisits = (domain) => {
  *      none
  *
  * return
- *      0.0 - 100.0 upon success, -1 otherwise
+ *      an object with the following
+ *      productivity: 0.0 - 100.0 if valid, null otherwise
+ *      domains: the domains object retrieved from firebase
  */
-const getProductivity = async (user) => {
+const getUserStats = async () => {
   const db = firebase.firestore();
-  var snapshot;
-  // Update for the logged in user
-  //
-  var docRef = db.collection('users').doc(user.uid);
+  const user = firebase.auth().currentUser;
 
-  docRef.get().then(function(doc) {
-    if (doc.exists) { // user document exists
-      console.log("Document data:", doc.data());
-    } else { // user document doesn't exist
-      db.collection('users').doc(user.uid).set({
-        domains: {},
-        teamId: null
-      });
-    }
-  }).catch(function(error) { // some error occurred
-    console.log("Error getting document:", error);
-    return -1;
-  });
+  if (!user) {
+    // No user is signed in.
+    console.error("[ERR] getUserStats: Not signed in");
+    return null;
+  }
 
-  snapshot = await db.collection('users').doc(user.uid).get();
-  var domains = snapshot.data()["domains"];
-  var keys = Object.keys(domains);
+  const userDoc = await db.collection('users').doc(user.uid).get();
+  if (!userDoc.exists) {
+    console.error("[ERR] getUserStats: User document doesn't exist");
+    return null;
+  }
+
+  const domains = userDoc.data()["domains"];
+  const keys = Object.keys(domains);
 
   var totalTime = 0;
   var prodTime = 0;
@@ -263,12 +259,10 @@ const getProductivity = async (user) => {
     }
     totalTime += currTime;
   });
-  console.log("Total time = " + totalTime + ", Productive time = " + prodTime);
-  console.log("Productivity = " + (prodTime / totalTime) * 100 + "%");
 
-  if (totalTime === 0) return -1; // cannot divide by zero, return error
+  if (totalTime === 0) return null; // cannot divide by zero, return error
 
-  return (prodTime / totalTime) * 100;
+  return { productivity: (prodTime / totalTime) * 100, domains: domains };
 };
 
 /*
