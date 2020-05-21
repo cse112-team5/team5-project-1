@@ -5,51 +5,66 @@
 var userLoggedIn = false;
 var userEmail = undefined;
 var userUid = undefined;
+
+var teamContext = null;
+var userContext = null;
+
 /*
  * Firebase initializations
  */
 
+/*
+ * Messaging logistics
+ */
 
+// port for authentication related communication
 const portAuth = chrome.extension.connect({ name: 'auth' });
 portAuth.onMessage.addListener((msg) => {
-  console.log("RECEVE", msg);
   if (msg.res === 'logged-in') {
     userLoggedIn = true;
     userEmail = msg.email;
     userUid = msg.uid;
     renderHome();
   }
-  else if (msg.res === 'auth-context') {
-    userLoggedIn = msg.loggedIn;
-    userEmail = msg.email;
-    userUid = msg.uid;
-    renderHome();
-  }
 });
+
+
 const handleLoginEmail = () => {};
+
 const handleLoginGmail = () => {
   console.log("GMAIL");
   portAuth.postMessage({ task: 'login-gmail' });
 };
 
+// port for user data related communication
 const portUserData = chrome.extension.connect({ name: 'user-data' });
 portUserData.onMessage.addListener((msg) => {
-  console.log("RECEVE", msg);
-  if (msg.res === 'invite-code-false') {
-    addTeamFormation();
-  }
-  else if (msg.res === 'invite-code-true') {
-    console.log("has invite code");
-    showInviteCode(msg.invite_code);
-  }
-  else {
-    console.log("rip");
+  console.log("CONTEXT GET");
+  if (msg.res === 'send-context') {
+    userContext = { loggedIn: msg.loggedIn, id: msg.uid, email: msg.email };
+    teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode };
+    refresh();
   }
 });
-const handleInviteCode = () => {
-  console.log("Getting Invite Code");
-  portUserData.postMessage({ task: 'get-invite-code' });
+
+// grabs the context from background.js
+const getContext = () => {
+  portUserData.postMessage({ task: 'get-context' });
 };
+
+// port for team data related information
+const portTeamData = chrome.extension.connect({ name: 'team-data' });
+portTeamData.onMessage.addListener((msg) => {
+  if (msg.res === 'res-create-team') {
+    createTeamResHandler();
+  }
+  else if (msg.res === 'res-join-team') {
+    joinTeamResHandler();
+  }
+  else if (msg.res === 'res-leave-team') {
+    leaveTeamResHandler();
+  }
+});
 
 //ui.start('#firebaseui-auth-container', uiConfig);
 
@@ -62,38 +77,6 @@ function compareTime(a, b) {
   return b[1].time - a[1].time;
 }
 
-async function getDomains() {
-  const db = firebase.firestore();
-  // Update for the logged in user
-  //
-  firebase.auth().onAuthStateChanged(async function(user) {
-    if (user) {
-      // User is signed in.
-
-      var docRef = db.collection('users').doc(user.uid);
-
-      docRef.get().then(function(doc) {
-        if (doc.exists) { // user document exists
-          console.log("Document data:", doc.data());
-        } else { // user document doesn't exist
-          console.log("No such document!");
-          db.collection('users').doc(user.uid).set({
-            domains: {},
-            teamId: null
-          });
-        }
-      }).catch(function(error) { // some error occurred
-        console.log("Error getting document:", error);
-      });
-
-      return (await docRef.get().data());
-    } else {
-      console.log("getDomains not logged in");
-      // No user is signed in.
-    }
-  });
-
-}
 
 const updateProductivity = () => {
   //TODO calculate productivity with an API instead of dummy values
@@ -146,212 +129,115 @@ function updateSites(sitesList) {
 
 }
 
-function createTeam(teamName) {
-  const db = firebase.firestore();
-
-  if (userUid !== undefined){
-    db.collection("teams").add({
-      name: teamName,
-      members: []
-    })
-      .then(function (docRef) {
-        console.log("Document written with ID: ", docRef.id);
-        db.collection("teams").doc(docRef.id).update({
-          invite_code: docRef.id
-        })
-          .then(function () {
-            console.log("Document successfully updated!");
-            joinTeam(docRef.id);
-            return docRef.id;
-          })
-          .catch(function (error) {
-            // The document probably doesn't exist.
-            console.error("Error updating document: ", error);
-          });
-      })
-      .catch(function (error) {
-        console.error("Error adding document: ", error);
-      });
-  }
-}
-
-function joinTeam(invite_code) {
-  const db = firebase.firestore();
-
-  if (userUid !== undefined) {
-    db.collection("teams").where("invite_code", "==", invite_code).get().then((qs) => {
-      if (qs.size === 1){
-        let teamDoc = null;
-        qs.forEach((doc) => {
-          teamDoc = doc;
-        });
-        return teamDoc;
-      } else {
-        throw new Error("Error with invite code");
-      }
-    }).then((teamDoc) => {
-      if (teamDoc == null) {
-        throw new Error("Error with invite code");
-      }
-      let members = teamDoc.data().members;
-      members.push(userUid);
-      db.collection("teams").doc(teamDoc.id).update({members: members});
-      db.collection("users").doc(userUid).update({teamId: teamDoc.id});
-
-      showInviteCode(invite_code);
-      removeTeamFormation();
-    }).catch((err)=>{
-      console.error("Error in joinTeam: ", err);
-    });
-  }
-}
-
-function leaveTeam(){
-  const db = firebase.firestore();
-
-  if (userUid !== undefined){
-    db.collection("users").doc(userUid).get()
-      .then((userRef)=>{
-        let data = userRef.data();
-        let teamId = data.teamId;
-        data.teamId = null;
-        db.collection("users").doc(userUid).set(data);
-        return teamId;
-      })
-      .then((teamId)=>{
-        return db.collection("teams").doc(teamId).get();
-      })
-      .then((teamRef)=>{
-        let data = teamRef.data();
-        let userIndex = data.members.indexOf(userUid);
-        data.members.splice(userIndex, 1);
-        db.collection("teams").doc(teamRef.id).set(data);
-      })
-      .then(()=>{
-        let disp = document.getElementById('invite_code_displayed');
-        disp.innerHTML = "";
-        disp.nextElementSibling.removeEventListener("click", leaveTeamHandler);
-        disp.parentNode.removeChild(disp.nextElementSibling);
-        addTeamFormation();
-      })
-      .catch((err)=>{
-        console.error("Error leaving team: ", err);
-      });
-  }
-}
 
 function joinTeamHandler() {
-  const invite_code = document.getElementById("invite_code").value;
-  if (invite_code.length !== 20) {
+  const inviteCode = document.getElementById("invite-code").value;
+  if (inviteCode.length !== 8) {
     return;
   }
-  joinTeam(invite_code);
+  portTeamData.postMessage({ task: 'join-team', inviteCode: inviteCode });
+}
+
+function joinTeamResHandler(teamId, inviteCode) {
+  showInviteCode();
+  hideTeamFormation();
 }
 
 function createTeamHandler() {
-  teamName = document.getElementById('new_team_name').value;
-  createTeam(teamName);
+  console.log("CREATE TEAM");
+  const teamName = document.getElementById('new-team-name').value;
+  portTeamData.postMessage({ task: 'create-team', teamName: teamName });
+}
+
+function createTeamResHandler(teamId, inviteCode) {
+  showInviteCode();
+  hideTeamFormation();
 }
 
 function leaveTeamHandler(){
-  leaveTeam();
+  portTeamData.postMessage({ task: 'leave-team' });
 }
 
-function showInviteCode(invite_code){
-  document.getElementById('invite_code_displayed').innerHTML = "Team invite code: " + invite_code;
-  let leaveTeamButton = document.createElement("button");
-  leaveTeamButton.id = "leaveTeamButton";
-  leaveTeamButton.innerHTML = "Leave Team";
-  leaveTeamButton.addEventListener("click", leaveTeamHandler);
-  document.getElementById('invite_code_displayed').parentNode.appendChild(leaveTeamButton);
+function leaveTeamResHandler() {
+  hideInviteCode();
+  showTeamFormation();
 }
 
-function removeTeamFormation() {
-  // remove event listeners
-  let createTeamButton = document.getElementById("newTeam");
-  createTeamButton.removeEventListener("click", createTeamHandler);
-  let joinTeamButton = document.getElementById("joinTeam");
-  joinTeamButton.removeEventListener("click", joinTeamHandler);
-
-  // remove elements
-  let elem = document.getElementById("team-formation");
-  elem.innerHTML = '';
+function showInviteCode(){
+  const teamInfo = document.getElementsByClassName('team-info')[0];
+  teamInfo.style.display = "block";
+  document.getElementById('team-name').innerHTML = "Team name: " + teamContext.name;
+  document.getElementById('team-invite-code').innerHTML = "Team invite code: " + teamContext.inviteCode;
 }
 
-function addTeamFormation(){
-  let elem = document.getElementById("team-formation");
-  elem.innerHTML =  `
-  <div>
-    <form id=selection>
-      <label for=new_team_name>Team name:</label><br>
-      <input type=text id=new_team_name name=new_team_name><br>
-    </form>
-    <button id=newTeam>Create team</button>
-  </div>
-  <div>
-    <form id=joinTeamForm>
-      <label for=invite_code>Invite Code:</label><br>
-      <input type=text id=invite_code name=invite_code><br>
-    </form>
-    <button id=joinTeam>Join team</button>
-  </div>
-  `;
-
-  document.getElementById("newTeam").addEventListener("click", createTeamHandler);
-  document.getElementById("joinTeam").addEventListener("click", joinTeamHandler);
-
+function hideInviteCode() {
+  const teamInfo = document.getElementsByClassName('team-info')[0];
+  teamInfo.style.display = "none";
 }
+
+function hideTeamFormation() {
+  const teamFormation = document.getElementById("team-formation");
+  teamFormation.style.display = "none";
+}
+
+function showTeamFormation(){
+  const teamFormation = document.getElementById("team-formation");
+  teamFormation.style.display = "block";
+}
+
+
 /*
  * HTML rendering
  */
 
-// grabs the auth context from background.js
-const getAuthContext = () => {
-  portAuth.postMessage({ task: 'get-auth-context' });
-};
 
-const renderHome = () => {
-  if (userLoggedIn) {
-    // we're logged in
-    const home = document.getElementsByClassName('home')[0];
-    while (home.firstChild) home.removeChild(home.firstChild);
+const refresh = () => {
+  const loginOptions = document.getElementsByClassName('login-options')[0];
+  const userInfo = document.getElementsByClassName('user-info')[0];
 
-    home.innerHTML = `
-    <p class="result-email"></p>
-    <p class="result-uid"></p>
-    `;
+  if (userContext.loggedIn) {
+    // we're logged in, so display the user info
+    loginOptions.style.display = "none";
+    userInfo.style.display = "block";
+    document.getElementsByClassName('result-email')[0].innerHTML = userContext.email;
+    document.getElementsByClassName('result-uid')[0].innerHTML = userContext.id;
 
-    document.getElementsByClassName('result-email')[0].innerHTML = userEmail;
-    document.getElementsByClassName('result-uid')[0].innerHTML = userUid;
-
-    handleInviteCode();
+    if (teamContext.id) {
+      hideTeamFormation();
+      showInviteCode();
+    }
+    else {
+      showTeamFormation();
+      hideInviteCode();
+    }
   }
   else {
     // we're not logged in, so display the login options
-    const home = document.getElementsByClassName('home')[0];
-    while (home.firstChild) home.removeChild(home.firstChild);
+    loginOptions.style.display = "block";
+    userInfo.style.display = "none";
 
-    home.innerHTML = `
-    <div class="login-options">
-      <button class="login-email">Login with Email</button>
-      <button class="login-gmail">Login with Gmail</button>
-    </div>
-    `;
-
-    document.getElementsByClassName('login-email')[0].addEventListener('click', handleLoginEmail);
-    document.getElementsByClassName('login-gmail')[0].addEventListener('click', handleLoginGmail);
+    hideTeamFormation();
+    hideInviteCode();
   }
 };
 
-chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
+const initializeListeners = () => {
+  document.getElementById("leave-team-button").addEventListener("click", leaveTeamHandler);
+  document.getElementById("new-team").addEventListener("click", createTeamHandler);
+  document.getElementById("join-team").addEventListener("click", joinTeamHandler);
+  document.getElementsByClassName('login-email')[0].addEventListener('click', handleLoginEmail);
+  document.getElementsByClassName('login-gmail')[0].addEventListener('click', handleLoginGmail);
+}
+
+//chrome.browserAction.onClicked.addListener(updateSites(getDomains()));
 
 window.onload = function () {
   updateProductivity();
   updateCurrentDomain();
 };
 
-getAuthContext();
+getContext();
 
 document.addEventListener('DOMContentLoaded', function () {
-  renderHome();
+  initializeListeners();
 });
