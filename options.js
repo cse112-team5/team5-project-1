@@ -9,11 +9,11 @@
  * Firebase auth object. So, there's no need to pass in user id as a parameter as long as the user is
  * logged in.
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   var link = document.getElementById('link');
   // onClick's logic below:
-  link.addEventListener('click', function() {
-    updateDomainProductive('xxx','xxx');
+  link.addEventListener('click', function () {
+    updateDomainProductive();
   });
 });
 /*
@@ -26,9 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
  * return
  *      0 upon success, 1 otherwise
  */
-function updateDomainProductive(domain, val) {
+function updateDomainProductive() {
   const db = firebase.firestore();
-  // TODO (Madhav, Xianhai)
   // Update for the logged in user
   //
   // Instead of 'user_0', use the uid of the currently logged in user.
@@ -36,34 +35,50 @@ function updateDomainProductive(domain, val) {
   // if there is no logged in user
   //
   // NOTE: use firebase.auth().currentUser.uid as the identifier
-  const user = db.collection("users").doc("user_0");
-  domain = document.getElementById('unproductive_domain').value;
-  var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
-  domain = urlParts[0];
-  val = getRadioVal( document.getElementById('selection'), 'if' );
-  var isTrue = (val == 'true');
-  user.get().then(documentSnapshot => {
-    if(documentSnapshot.exists) {
-      let data = documentSnapshot.data();
+  const portUserData = chrome.extension.connect({ name: 'user-data-options' });
+  portUserData.postMessage({ task: 'get-user-id' });
+  var uid = "";
+  portUserData.onMessage.addListener((msg) => {
+    console.log("RECEVE", msg);
+    if (msg.res === 'logged_in') {
+      console.log("user logged in");
+      uid = msg.user_uid;
+      console.log(uid);
+      const user = db.collection("users").doc(uid);
+      domain = document.getElementById('unproductive_domain').value;
+      var urlParts = domain.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+      var domain = urlParts[0];
+      var val = getRadioVal(document.getElementById('selection'), 'if');
+      var isTrue = (val === 'Productive');
+      user.get().then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          let data = documentSnapshot.data();
 
-      const map = new Map(Object.entries(data["domains"]));
+          const map = new Map(Object.entries(data["domains"]));
 
-      // update
-      if(map.has(domain)) {
-        time = data["domains"][domain]["time"];
-        visits = data["domains"][domain]["visits"];
-        data["domains"][domain] = {productive: isTrue, time: time, visits: visits};
-        user.set(data);
-      }
-      // add
-      else{
-        data["domains"][domain] = {productive: isTrue, time: 0, visits: 0};
-        user.set(data);
-      }
+          // update
+          if (map.has(domain)) {
+            console.log("prod");
+            time = data["domains"][domain]["time"];
+            visits = data["domains"][domain]["visits"];
+            data["domains"][domain] = { productive: isTrue, time: time, visits: visits };
+            user.set(data);
+            window.alert("Domain added successfully");
+            return 0;
+          }
+          // add
+          else {
+            console.log("unprod");
+            data["domains"][domain] = { productive: isTrue, time: 0, visits: 0 };
+            user.set(data);
+          }
+        }
+      });
+    }
+    else {
+      console.log("user not logged in");
     }
   });
-  window.alert("Domain added successfully");
-  return 0;
 }
 
 //helper function to get user selection
@@ -73,8 +88,8 @@ function getRadioVal(form, name) {
   var radios = form.elements[name];
 
   // loop through list of radio buttons
-  for(var i=0, len=radios.length; i<len; i++) {
-    if(radios[i].checked) { // radio checked?
+  for (var i = 0, len = radios.length; i < len; i++) {
+    if (radios[i].checked) { // radio checked?
       val = radios[i].value; // if so, hold its value in val
       break; // and break out of for loop
     }

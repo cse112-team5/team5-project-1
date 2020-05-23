@@ -10,6 +10,11 @@
     "url": "https://github.com/cse112-sp20/team5-project"
   },
   "devDependencies": {
-    "eslint": "^6.8.0"
+    "eslint": "^4.19.1"
+  },
+  "dependencies": {
+    "-": "0.0.1",
+    "babel-eslint": "^8.2.6",
+    "g": "^2.0.1"
   }
 }
