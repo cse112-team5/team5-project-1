@@ -41,7 +41,7 @@ portUserData.onMessage.addListener((msg) => {
       productivity: msg.userProductivity,
       domains: msg.userDomains,
     };
-    teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode };
+    teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode, membersData: msg.membersData };
     refresh();
   }
 });
@@ -74,6 +74,10 @@ function updateCurrentDomain(){
 }
 
 function joinTeamHandler() {
+  if (teamContext.id){
+    showError();
+    return;
+  }
   const inviteCode = document.getElementById("invite-code").value;
   if (inviteCode.length !== 8) {
     return;
@@ -82,12 +86,19 @@ function joinTeamHandler() {
 }
 
 function createTeamHandler() {
-  console.log("CREATE TEAM");
+  if (teamContext.id){
+    showError();
+    return;
+  }
   const teamName = document.getElementById('new-team-name').value;
   portTeamData.postMessage({ task: 'create-team', teamName: teamName });
 }
 
 function leaveTeamHandler(){
+  if (!teamContext.id){
+    showError();
+    return;
+  }
   portTeamData.postMessage({ task: 'leave-team' });
 }
 
@@ -182,6 +193,65 @@ const hideScreenTabs = () => {
   screenTabsElement.style.display = 'none';
 }
 
+const showLeaderBoard = () => {
+
+  console.log(teamContext.membersData);
+
+  // show and populate leaderboard if user is in a team
+  if (teamContext.membersData){
+
+    // create table element
+    let list = document.createElement('table');
+    list.style = "text-align: center; max-height: 70%";
+
+    // add header row to table
+    let header = document.createElement('tr');
+    let headerTitles = ["Rank", "Name", "Productivity", "Time Wasted"];
+    headerTitles.forEach((title)=>{
+      let elem = document.createElement('th');
+      elem.append(document.createTextNode(title));
+      header.appendChild(elem);
+    });
+    list.append(header);
+
+    // generate and add table rows based on user ranking
+    let count = 1;
+    teamContext.membersData.forEach(function(member){
+      if (member.productivity){
+        console.log(count);
+        let item = document.createElement('tr');
+        let values = [count, member.name, member.productivity + "%", 
+                      Math.floor(member.timeWasted / 3600) + " h " + (Math.floor(member.timeWasted % 60) >= 30 ? Math.floor(member.timeWasted / 60) + 1 : Math.floor(member.timeWasted / 60)) + " m"];
+      
+        values.forEach((val)=>{
+          let elem = document.createElement('td');
+          elem.append(document.createTextNode(val));
+          item.appendChild(elem);
+        });
+        list.appendChild(item);
+        count++;
+      }
+    });
+
+    // clear current content within leaderboard element and add generated list of rankings
+    document.getElementsByClassName('team-leaderboard')[0].innerHTML = '';
+    document.getElementsByClassName('team-leaderboard')[0].style.display = 'block';
+    document.getElementsByClassName('team-leaderboard')[0].appendChild(list);
+  } else {
+    document.getElementsByClassName('team-leaderboard')[0].innerHTML = 'Error retrieving data for leaderboard';
+  }
+}
+
+const hideLeaderBoard = () => {
+  const leaderBoardElement = document.getElementsByClassName('team-leaderboard')[0];
+  leaderBoardElement.style.display = 'none';
+}
+
+const showError = ()  => {
+  const bodyElement = document.getElementsByTagName('body')[0];
+  bodyElement.innerHTML = "<h1>An error has been encountered. Please reopen the popup.</h1>";
+}
+
 /*
  * HTML rendering
  */
@@ -206,6 +276,7 @@ const refresh = () => {
       showMyStats();
       hideTeamFormation();
       hideInviteCode();
+      hideLeaderBoard();
     }
     else {
       // show our current team if we're part of one, otherwise show the 
@@ -213,10 +284,12 @@ const refresh = () => {
       if (teamContext.id) {
         hideTeamFormation();
         showInviteCode();
+        showLeaderBoard();
       }
       else {
         showTeamFormation();
         hideInviteCode();
+        hideLeaderBoard();
       }
 
       hideMyStats();
@@ -232,6 +305,7 @@ const refresh = () => {
 
     hideTeamFormation();
     hideInviteCode();
+    hideLeaderBoard();
 
     // hide the user's stats
     hideMyStats();
