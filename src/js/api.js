@@ -240,9 +240,7 @@ const getUserStats = async () => {
   }
 
   let userStats = await getUserStatsHelper(user.uid);
-  delete userStats.timeWasted;
-  delete userStats.name;
-  return userStats;
+  return {productivity: userStats.productivity, domains: userStats.domains};
 };
 
 /*
@@ -388,8 +386,12 @@ const joinTeam = async (teamId, inviteCode) => {
     db.collection("teams").doc(teamDoc.id).update({members: members});
     db.collection("users").doc(user.uid).update({teamId: teamDoc.id});
 
+    // need to add current user to list of members
+    let teamDocData = {...teamDoc.data()};
+    teamDocData.members.push(user.uid);
+
     // return relevant data
-    return {id: teamDoc.id, ...teamDoc.data()};
+    return {id: teamDoc.id, ...teamDocData};
 
   } catch (error) {
     console.error("[ERR] joinTeam:", error);

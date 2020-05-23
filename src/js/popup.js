@@ -201,8 +201,13 @@ const showLeaderBoard = () => {
   if (teamContext.membersData){
 
     // create table element
-    let list = document.createElement('table');
-    list.style = "text-align: center; max-height: 70%";
+    let table = document.createElement('table');
+    table.style = "text-align: center; max-height: 70%";
+
+    // add caption/title
+    let tableTitle = document.createElement("caption");
+    tableTitle.innerText = "Team LeaderBoard";
+    table.appendChild(tableTitle);
 
     // add header row to table
     let header = document.createElement('tr');
@@ -212,7 +217,7 @@ const showLeaderBoard = () => {
       elem.append(document.createTextNode(title));
       header.appendChild(elem);
     });
-    list.append(header);
+    table.append(header);
 
     // generate and add table rows based on user ranking
     let count = 1;
@@ -228,7 +233,7 @@ const showLeaderBoard = () => {
           elem.append(document.createTextNode(val));
           item.appendChild(elem);
         });
-        list.appendChild(item);
+        table.appendChild(item);
         count++;
       }
     });
@@ -236,7 +241,7 @@ const showLeaderBoard = () => {
     // clear current content within leaderboard element and add generated list of rankings
     document.getElementsByClassName('team-leaderboard')[0].innerHTML = '';
     document.getElementsByClassName('team-leaderboard')[0].style.display = 'block';
-    document.getElementsByClassName('team-leaderboard')[0].appendChild(list);
+    document.getElementsByClassName('team-leaderboard')[0].appendChild(table);
   } else {
     document.getElementsByClassName('team-leaderboard')[0].innerHTML = 'Error retrieving data for leaderboard';
   }
