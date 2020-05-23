@@ -1,15 +1,17 @@
-version: 2.1                                                                    
-orbs:                                                                           
-  node: circleci/node@1.1.6                                                     
-jobs:                                                                           
-  lint:                                                                         
-    executor:                                                                   
-      name: node/default                                                        
-    steps:                                                                      
-        - checkout                                                              
-        - run: npm install eslint                                               
-        - run: npm run lint                                                     
+version: 2.0
+jobs:
+  lint:
+    machine: 
+      image: circleci/classic:201808-01
+    steps:
+      - checkout  
+      - run: npm install eslint                                               
+      - run: npm run lint                                                     
 workflows:                                                                      
-    build-and-test:                                                             
-      jobs:                                                                     
-        - lint 
+  version: 2
+  build-and-test:                                                             
+    jobs:                                                                     
+      - lint: 
+          filters:
+            branches: 
+              only: master
