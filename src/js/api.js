@@ -32,7 +32,8 @@ const createUser = async () => {
       console.log("[NOTE] createUser: User doesn't exist. Creating doc for user.");
       db.collection('users').doc(user.uid).set({
         domains: {},
-        teamId: null
+        teamId: null,
+        name: user.displayName
       });
 
       return { id: userDoc.id, teamId: null };
@@ -217,10 +218,8 @@ const incrementDomainVisits = (domain) => {
 /*
  * Calculates the productivity score and retrieves domains for user
  *
- * To calculate the productivity score, first retreive the domain map from
- * Firebase. Then, divide the total time spend on productive sites by the
- * total time spent. If the denominator is 0, return -1. Else return a the
- * score as a percentage float between 0 - 100
+ * Calls on getUserStatsHelper with the parameter uid as the current user's uid
+ * Drops the unnecessary elements and returns the resulting object
  *
  * paremeters:
  *      none
@@ -240,7 +239,36 @@ const getUserStats = async () => {
     return null;
   }
 
-  const userDoc = await db.collection('users').doc(user.uid).get();
+  let userStats = await getUserStatsHelper(user.uid);
+  delete userStats.timeWasted;
+  delete userStats.name;
+  return userStats;
+};
+
+/*
+ * Calculates the productivity score and retrieves domains for the given user id
+ *
+ * To calculate the productivity score, first retreive the domain map from
+ * Firebase. Then, divide the total time spend on productive sites by the
+ * total time spent. If the denominator is 0, return -1. Else return a the
+ * score as a percentage float between 0 - 100
+ *
+ * paremeters:
+ *      uid (string) - the uid of the user to retrieve data for
+ *
+ * return
+ *      an object with the following
+ *      productivity: 0.0 - 100.0 if valid, null otherwise
+ *      domains: the domains object retrieved from firebase
+ *      timeWasted: total time spent in the time unit of seconds on unproductive domains
+ *      name: name of the user with the specified uid
+ */
+// TODO add name to returned data
+const getUserStatsHelper = async (uid) => {
+  try {
+  const db = firebase.firestore();
+
+  const userDoc = await db.collection('users').doc(uid).get();
   if (!userDoc.exists) {
     console.error("[ERR] getUserStats: User document doesn't exist");
     return null;
@@ -262,8 +290,13 @@ const getUserStats = async () => {
 
   if (totalTime === 0) return null; // cannot divide by zero, return error
 
-  return { productivity: (prodTime / totalTime) * 100, domains: domains };
-};
+  return { productivity: (prodTime / totalTime) * 100, domains: domains, timeWasted: (totalTime - prodTime), name: userDoc.data()["name"] };
+ } catch(err) {
+   console.log("[ERR] getUserstatsHelper: " + err);
+ }
+}
+
+
 
 /*
  * Get a team

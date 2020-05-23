@@ -103,6 +103,7 @@ const sendContext = () => {
   var teamId = null;
   var teamName = null;
   var teamInviteCode = null;
+  var teamMembersData = null;
 
   // user info if logged in
   if (user) {
@@ -117,6 +118,7 @@ const sendContext = () => {
     teamId = teamContext.id;
     teamName = teamContext.name;
     teamInviteCode = teamContext.inviteCode;
+    teamMembersData = teamContext.membersData;
   }
 
   if (portUserData)
@@ -127,7 +129,7 @@ const sendContext = () => {
       uid: uid,
       userProductivity: userProductivity,
       userDomains: userDomains,
-      teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode,
+      teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode, membersData: teamMembersData,
     });
 };
 
