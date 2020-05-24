@@ -26,13 +26,14 @@ const initApp = () => {
     setInterval(updateStats, 5000);
     // NOTE if you decrease this timer while testing,
     // be sure to bring it back up later
+    setInterval(updateMyTeam, 5000);
     setInterval(updateDatabaseWithDomainTimes, 60000);
     chrome.tabs.onUpdated.addListener(handleUpdate);
     chrome.tabs.onActivated.addListener(handleChangeTab);
 
     sendContext();
   });
-}
+};
 
 
 /*
@@ -161,6 +162,25 @@ const updateStats = async () => {
   userContext.productivity = newStats.productivity;
   userContext.domains = sortDomains(newStats.domains);
 
+  sendContext();
+};
+
+const updateMyTeam = async () => {
+  const user = firebase.auth().currentUser;
+  if(!user || !teamContext) {
+    return;
+  }
+
+  let list = await Promise.all(teamContext.members.map(async (uid)=>{
+    let temp = await getUserStatsHelper(uid);
+    delete temp.domains;
+    return temp;
+  }));
+
+  teamContext.membersData = list.sort(function comp(a, b) {
+    return b.productivity - a.productivity;
+  });
+  console.log(teamContext.membersData);
   sendContext();
 };
 

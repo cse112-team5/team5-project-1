@@ -1,7 +1,7 @@
 /*
  * Globals
  */
-
+/* eslint-disable no-unused-vars */
 var userLoggedIn = false;
 var userEmail = undefined;
 var userUid = undefined;
@@ -11,7 +11,7 @@ var userContext = null;
 
 var currentDomain = null;
 var currentScreen = SCREEN_MY_STATS;
-
+/* eslint-enable no-unused-vars */
 /*
  * Messaging logistics
  */
@@ -41,7 +41,7 @@ portUserData.onMessage.addListener((msg) => {
       productivity: msg.userProductivity,
       domains: msg.userDomains,
     };
-    teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode };
+    teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode, membersData: msg.membersData };
     refresh();
   }
 });
@@ -74,6 +74,10 @@ function updateCurrentDomain(){
 }
 
 function joinTeamHandler() {
+  if (teamContext.id){
+    showError();
+    return;
+  }
   const inviteCode = document.getElementById("invite-code").value;
   if (inviteCode.length !== 8) {
     return;
@@ -82,12 +86,19 @@ function joinTeamHandler() {
 }
 
 function createTeamHandler() {
-  console.log("CREATE TEAM");
+  if (teamContext.id){
+    showError();
+    return;
+  }
   const teamName = document.getElementById('new-team-name').value;
   portTeamData.postMessage({ task: 'create-team', teamName: teamName });
 }
 
 function leaveTeamHandler(){
+  if (!teamContext.id){
+    showError();
+    return;
+  }
   portTeamData.postMessage({ task: 'leave-team' });
 }
 
@@ -97,12 +108,12 @@ function leaveTeamHandler(){
 const switchScreenMyTeamHandler = () => {
   currentScreen = SCREEN_MY_TEAM;
   refresh();
-}
+};
 
 const switchScreenMyStatsHandler = () => {
   currentScreen = SCREEN_MY_STATS;
   refresh();
-}
+};
 
 /*
  * Element rendering togglers
@@ -165,22 +176,86 @@ const showMyStats = () => {
     document.getElementsByClassName('stats-top-sites-val')[0].innerHTML = '';
     document.getElementsByClassName('stats-top-sites-val')[0].appendChild(list);
   }
-}
+};
 
 const hideMyStats = () => {
   const myStatsElement = document.getElementsByClassName('my-stats')[0];
   myStatsElement.style.display = 'none';
-}
+};
 
 const showScreenTabs = () => {
   const screenTabsElement = document.getElementsByClassName('screen-tabs')[0];
   screenTabsElement.style.display = 'block';
-}
+};
 
 const hideScreenTabs = () => {
   const screenTabsElement = document.getElementsByClassName('screen-tabs')[0];
   screenTabsElement.style.display = 'none';
-}
+};
+
+const showLeaderBoard = () => {
+
+  console.log(teamContext.membersData);
+
+  // show and populate leaderboard if user is in a team
+  if (teamContext.membersData){
+
+    // create table element
+    let table = document.createElement('table');
+    table.style = "text-align: center; max-height: 70%";
+
+    // add caption/title
+    let tableTitle = document.createElement("caption");
+    tableTitle.innerText = "Team LeaderBoard";
+    table.appendChild(tableTitle);
+
+    // add header row to table
+    let header = document.createElement('tr');
+    let headerTitles = ["Rank", "Name", "Productivity", "Time Wasted"];
+    headerTitles.forEach((title)=>{
+      let elem = document.createElement('th');
+      elem.append(document.createTextNode(title));
+      header.appendChild(elem);
+    });
+    table.append(header);
+
+    // generate and add table rows based on user ranking
+    let count = 1;
+    teamContext.membersData.forEach(function(member){
+      if (member.productivity){
+        console.log(count);
+        let item = document.createElement('tr');
+        let values = [count, member.name, member.productivity + "%",
+          Math.floor(member.timeWasted / 3600) + " h " + (Math.floor(member.timeWasted % 60) >= 30 ? Math.floor(member.timeWasted / 60) + 1 : Math.floor(member.timeWasted / 60)) + " m"];
+
+        values.forEach((val)=>{
+          let elem = document.createElement('td');
+          elem.append(document.createTextNode(val));
+          item.appendChild(elem);
+        });
+        table.appendChild(item);
+        count++;
+      }
+    });
+
+    // clear current content within leaderboard element and add generated list of rankings
+    document.getElementsByClassName('team-leaderboard')[0].innerHTML = '';
+    document.getElementsByClassName('team-leaderboard')[0].style.display = 'block';
+    document.getElementsByClassName('team-leaderboard')[0].appendChild(table);
+  } else {
+    document.getElementsByClassName('team-leaderboard')[0].innerHTML = 'Error retrieving data for leaderboard';
+  }
+};
+
+const hideLeaderBoard = () => {
+  const leaderBoardElement = document.getElementsByClassName('team-leaderboard')[0];
+  leaderBoardElement.style.display = 'none';
+};
+
+const showError = ()  => {
+  const bodyElement = document.getElementsByTagName('body')[0];
+  bodyElement.innerHTML = "<h1>An error has been encountered. Please reopen the popup.</h1>";
+};
 
 /*
  * HTML rendering
@@ -206,17 +281,20 @@ const refresh = () => {
       showMyStats();
       hideTeamFormation();
       hideInviteCode();
+      hideLeaderBoard();
     }
     else {
-      // show our current team if we're part of one, otherwise show the 
+      // show our current team if we're part of one, otherwise show the
       // team formation elements
       if (teamContext.id) {
         hideTeamFormation();
         showInviteCode();
+        showLeaderBoard();
       }
       else {
         showTeamFormation();
         hideInviteCode();
+        hideLeaderBoard();
       }
 
       hideMyStats();
@@ -232,6 +310,7 @@ const refresh = () => {
 
     hideTeamFormation();
     hideInviteCode();
+    hideLeaderBoard();
 
     // hide the user's stats
     hideMyStats();
@@ -250,7 +329,7 @@ const initialize = () => {
 
   // other initializations
   updateCurrentDomain();
-}
+};
 
 
 window.onload = function () {

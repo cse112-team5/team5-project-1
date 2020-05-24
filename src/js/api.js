@@ -12,6 +12,7 @@
  * return
  *      the user context if successful, null otherwise
  */
+/* eslint-disable no-unused-vars */
 const createUser = async () => {
   const db = firebase.firestore();
   const user = firebase.auth().currentUser;
@@ -32,7 +33,8 @@ const createUser = async () => {
       console.log("[NOTE] createUser: User doesn't exist. Creating doc for user.");
       db.collection('users').doc(user.uid).set({
         domains: {},
-        teamId: null
+        teamId: null,
+        name: user.displayName
       });
 
       return { id: userDoc.id, teamId: null };
@@ -74,7 +76,7 @@ const getDomains = async () => {
   }
 
   return null;
-}
+};
 
 /*
  * Increments the time spent on a domain for the user
@@ -104,7 +106,7 @@ const incrementDomainActivity = (domain, increment) => {
 
   var ref = db.collection('users').doc(user.uid);
 
-  ref.get().then(function(doc) {
+  ref.get().then(function (doc) {
 
     if (doc.exists) { // user document exists
       console.log("Document data:", doc.data());
@@ -116,7 +118,7 @@ const incrementDomainActivity = (domain, increment) => {
       });
       //return -1;
     }
-  }).catch(function(error) { // some error occurred
+  }).catch(function (error) { // some error occurred
     console.log("Error getting document:", error);
     return -1;
   });
@@ -174,7 +176,7 @@ const incrementDomainVisits = (domain) => {
   // User is signed in.
   var ref = db.collection('users').doc(user.uid);
 
-  ref.get().then(function(doc) {
+  ref.get().then(function (doc) {
     if (doc.exists) { // user document exists
       console.log("Document data:", doc.data());
     } else { // user document doesn't exist
@@ -184,7 +186,7 @@ const incrementDomainVisits = (domain) => {
         teamId: null
       });
     }
-  }).catch(function(error) { // some error occurred
+  }).catch(function (error) { // some error occurred
     console.log("Error getting document:", error);
     return -1;
   });
@@ -217,10 +219,8 @@ const incrementDomainVisits = (domain) => {
 /*
  * Calculates the productivity score and retrieves domains for user
  *
- * To calculate the productivity score, first retreive the domain map from
- * Firebase. Then, divide the total time spend on productive sites by the
- * total time spent. If the denominator is 0, return -1. Else return a the
- * score as a percentage float between 0 - 100
+ * Calls on getUserStatsHelper with the parameter uid as the current user's uid
+ * Drops the unnecessary elements and returns the resulting object
  *
  * paremeters:
  *      none
@@ -240,30 +240,63 @@ const getUserStats = async () => {
     return null;
   }
 
-  const userDoc = await db.collection('users').doc(user.uid).get();
-  if (!userDoc.exists) {
-    console.error("[ERR] getUserStats: User document doesn't exist");
-    return null;
-  }
-
-  const domains = userDoc.data()["domains"];
-  const keys = Object.keys(domains);
-
-  var totalTime = 0;
-  var prodTime = 0;
-
-  keys.forEach(key => {
-    var currTime = domains[key]["time"];
-    if (domains[key]["productive"]) {
-      prodTime += currTime;
-    }
-    totalTime += currTime;
-  });
-
-  if (totalTime === 0) return null; // cannot divide by zero, return error
-
-  return { productivity: (prodTime / totalTime) * 100, domains: domains };
+  let userStats = await getUserStatsHelper(user.uid);
+  return { productivity: userStats.productivity, domains: userStats.domains };
 };
+
+/*
+ * Calculates the productivity score and retrieves domains for the given user id
+ *
+ * To calculate the productivity score, first retreive the domain map from
+ * Firebase. Then, divide the total time spend on productive sites by the
+ * total time spent. If the denominator is 0, return -1. Else return a the
+ * score as a percentage float between 0 - 100
+ *
+ * paremeters:
+ *      uid (string) - the uid of the user to retrieve data for
+ *
+ * return
+ *      an object with the following
+ *      productivity: 0.0 - 100.0 if valid, null otherwise
+ *      domains: the domains object retrieved from firebase
+ *      timeWasted: total time spent in the time unit of seconds on unproductive domains
+ *      name: name of the user with the specified uid
+ */
+// TODO add name to returned data
+const getUserStatsHelper = async (uid) => {
+  try {
+    const db = firebase.firestore();
+
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      console.error("[ERR] getUserStats: User document doesn't exist");
+      return null;
+    }
+
+    const domains = userDoc.data()["domains"];
+    const keys = Object.keys(domains);
+
+    var totalTime = 0;
+    var prodTime = 0;
+
+    keys.forEach(key => {
+      var currTime = domains[key]["time"];
+      if (domains[key]["productive"]) {
+        prodTime += currTime;
+      }
+      totalTime += currTime;
+    });
+    var productivityPercent = null;
+    if (totalTime > 0) {
+      productivityPercent = (prodTime / totalTime) * 100; // cannot divide by zero, return error
+    }
+    return { productivity: productivityPercent, domains: domains, timeWasted: (totalTime - prodTime), name: userDoc.data()["name"] };
+  } catch (err) {
+    console.log("[ERR] getUserstatsHelper: " + err);
+  }
+};
+
+
 
 /*
  * Get a team
@@ -283,11 +316,11 @@ const getTeam = async (teamId) => {
     const teamDoc = await db.collection("teams").doc(teamId).get();
 
     // return relevant data
-    return {id: teamDoc.id, ...teamDoc.data()};
+    return { id: teamDoc.id, ...teamDoc.data() };
   } catch (error) {
     console.error("[ERR] getTeam:", error);
   }
-}
+};
 
 /*
  * Create a team
@@ -312,13 +345,13 @@ const createTeam = async (teamName) => {
     const userDoc = await db.collection('teams').doc(docRef.id).get();
 
     // return relevant data
-    return {id: docRef.id, ...(userDoc.data())};
+    return { id: docRef.id, ...(userDoc.data()) };
   } catch (error) {
     console.error("[ERR] createTeam:", error);
   }
 
   return null;
-}
+};
 
 /*
  * Join a team through invite
@@ -333,7 +366,7 @@ const joinTeam = async (teamId, inviteCode) => {
   const db = firebase.firestore();
   const user = firebase.auth().currentUser;
 
-  if (!user) return null
+  if (!user) return null;
   try {
     var teamDoc = null;
 
@@ -342,7 +375,7 @@ const joinTeam = async (teamId, inviteCode) => {
     }
     else {
       const qs = await db.collection("teams").where("inviteCode", "==", inviteCode).get();
-      if (qs.size === 1){
+      if (qs.size === 1) {
         qs.forEach((doc) => {
           teamDoc = doc;
         });
@@ -355,15 +388,19 @@ const joinTeam = async (teamId, inviteCode) => {
     db.collection("teams").doc(teamDoc.id).update({members: members});
     db.collection("users").doc(user.uid).update({teamId: teamDoc.id});
 
+    // need to add current user to list of members
+    let teamDocData = {...teamDoc.data()};
+    teamDocData.members.push(user.uid);
+
     // return relevant data
-    return {id: teamDoc.id, ...teamDoc.data()};
+    return {id: teamDoc.id, ...teamDocData};
 
   } catch (error) {
     console.error("[ERR] joinTeam:", error);
   }
 
   return null;
-}
+};
 
 /*
  * Leave the current team
@@ -378,10 +415,10 @@ const leaveTeam = async () => {
   const db = firebase.firestore();
   const user = firebase.auth().currentUser;
 
-  if (!user) return false
+  if (!user) return false;
   try {
     // remove teamId on user document
-    const userRef = await db.collection("users").doc(user.uid).get()
+    const userRef = await db.collection("users").doc(user.uid).get();
     var data = userRef.data();
     const teamId = data.teamId;
     data.teamId = null;
@@ -400,4 +437,5 @@ const leaveTeam = async () => {
   }
 
   return false;
-}
+};
+/* eslint-enable no-unused-vars */

@@ -103,6 +103,7 @@ const sendContext = () => {
   var teamId = null;
   var teamName = null;
   var teamInviteCode = null;
+  var teamMembersData = null;
 
   // user info if logged in
   if (user) {
@@ -117,6 +118,7 @@ const sendContext = () => {
     teamId = teamContext.id;
     teamName = teamContext.name;
     teamInviteCode = teamContext.inviteCode;
+    teamMembersData = teamContext.membersData;
   }
 
   if (portUserData)
@@ -127,7 +129,7 @@ const sendContext = () => {
       uid: uid,
       userProductivity: userProductivity,
       userDomains: userDomains,
-      teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode,
+      teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode, membersData: teamMembersData,
     });
 };
 
@@ -153,12 +155,12 @@ const createTeamHandler = async (teamName) => {
   // TODO fix this to make it more efficient can add the user when we create
   // the team
   const team = await createTeam(teamName);
-  const res = await joinTeam(team.id, null);
+  const newTeam = await joinTeam(team.id, null);
 
-  teamContext = team;
+  teamContext = newTeam;
 
   sendContext();
-}
+};
 
 const joinTeamHandler = async (inviteCode) => {
   const team = await joinTeam(null, inviteCode);
@@ -166,7 +168,7 @@ const joinTeamHandler = async (inviteCode) => {
   teamContext = team;
 
   sendContext();
-}
+};
 
 const leaveTeamHandler = async () => {
   const val = await leaveTeam();
@@ -174,4 +176,4 @@ const leaveTeamHandler = async () => {
   if (val) teamContext = null;
 
   sendContext();
-}
+};

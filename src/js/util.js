@@ -3,22 +3,22 @@
  *
  * Functions that serve modular, project independant purposes should go here
  */
-
+/* eslint-disable no-unused-vars */
 function generateId(len) {
   var alphanum = 'ABCDEFGHIJKLMNOPQRSTUV0123456789'.split(''),
-    n = alphanum.length
+    n = alphanum.length;
 
   for(var i = n - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1))
-    var tmp = alphanum[i]
-    alphanum[i] = alphanum[j]
-    alphanum[j] = tmp
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = alphanum[i];
+    alphanum[i] = alphanum[j];
+    alphanum[j] = tmp;
   }
 
-  var code = []
+  var code = [];
   for (let i = 0; i < len; i++)
-    code.push(alphanum[Math.floor(Math.random() * n)])
-  return code.join('')
+    code.push(alphanum[Math.floor(Math.random() * n)]);
+  return code.join('');
 }
 
 // TODO
@@ -33,3 +33,4 @@ function sortDomains(data) {
 function compareTime(a, b) {
   return b[1].time - a[1].time;
 }
+/* eslint-enable no-unused-vars */
