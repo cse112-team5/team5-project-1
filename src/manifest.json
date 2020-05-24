@@ -4,11 +4,11 @@
   "description": "A productivity tracker extension",
   "permissions": ["storage", "tabs"],
   "background": {
-    "page": "background.html"
+    "page": "html/background.html"
   },
   "browser_action": {
     "default_title": "Phantime",
-    "default_popup": "popup.html",
+    "default_popup": "html/popup.html",
     "default_icon": {
       "16": "images/logo.png",
       "32": "images/logo.png",
@@ -16,7 +16,7 @@
       "128": "images/logo.png"
     }
   },
-  "options_page": "options.html",
+  "options_page": "html/options.html",
   "icons": {
     "16": "images/logo.png",
     "32": "images/logo.png",

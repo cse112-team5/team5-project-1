@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <style>
+
+body {
+  width: 450px;
+  height: 450px;
+}
+    </style>
+    <script src="../js/constants.js"></script>
+    <script src="../js/popup.js"></script>
+  </head>
+
+  <body>
+    <h1>Phantime</h1>
+    <div class="login"> 
+      <div class="login-options">
+        <button class="login-email">Login with Email</button>
+        <button class="login-gmail">Login with Gmail</button>
+      </div>
+
+      <div class="user-info">
+        <p class="result-email"></p>
+      </div>
+    </div>
+
+    <div class="screen-tabs">
+      <button class="screen-tabs-my-stats">My Stats</button>
+      <button class="screen-tabs-my-team">My Team</button>
+    </div>
+
+    <div class="my-stats">
+      <div class="stats-productivity">
+        <h2>Productivity</h2>
+        <p class="stats-productivity-val"></p>
+      </div>
+
+      <div class="stats-cur-domain">
+        <h2>You are currently on</h2>
+        <div class="stats-cur-domain-val"></div>
+      </div>
+
+      <div>
+        <h2 class="stats-top-sites"></h2>
+        <p class="stats-top-sites-val"></p>
+      </div>
+    </div>
+
+    <div class="my-team">
+      <div id="team-formation">
+        <div>
+          <form id="selection">
+            <label for="new-team-name">Team name:</label><br>
+            <input type="text" id="new-team-name" name="new-team-name"><br>
+          </form>
+          <button id="new-team">Create team</button>
+        </div>
+
+        <div>
+          <form id="join-team-form">
+            <label for="invite-code">Invite Code:</label><br>
+            <input type="text" id="invite-code" name="invite-code"><br>
+          </form>
+          <button id="join-team">Join team</button>
+        </div>
+      </div>
+
+      <div class="team-info">
+        <p id="team-name"></p>
+        <p id="team-invite-code"></p>
+        <button id="leave-team-button">Leave Team</button>
+      </div>
+
+    </div>
+  </body>
+</html>
