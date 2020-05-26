@@ -1,11 +1,13 @@
-Phantime
+# Phantime
 
 A productivity tracker extension
 
+[![cse112-team5](https://circleci.com/gh/cse112-team5/team5-project.svg?style=shield&circle-token=9ab1869a799656127e94839e3b76b45837084720)](https://app.circleci.com/pipelines/github/cse112-team5/team5-project)
 
-# Running the Pipeline Locally 
 
-## Setup 
+## Running the Pipeline Locally 
+
+### Setup 
 
 1. Install Node.js + npm 
 2. Install the required dependencies via npm: 
@@ -14,9 +16,9 @@ A productivity tracker extension
 npm install
 ```
 
-## Running the Linter
+### Running the Linter
 Use npm script: `npm run lint` 
 
 
-## Running the tests
+### Running the tests
 TBC 
