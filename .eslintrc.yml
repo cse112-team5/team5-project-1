@@ -11,7 +11,10 @@ parserOptions:
 rules:                                                                          
   eol-last: error                                                               
   eqeqeq: [warn, allow-null]                                                   
+  func-style: [2, "expression"]
   indent: [error, 2, { SwitchCase: 1 }]                                         
   no-trailing-spaces: error                                                     
   no-unused-vars: [error, { vars: all, args: none, ignoreRestSiblings: true }]  
+  quotes: [2, "double", "avoid-escape"] 
   semi: [error, always]    
+
