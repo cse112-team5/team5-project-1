@@ -1,6 +1,5 @@
-/*
- * Globals
- */
+/* eslint-disable no-unused-vars */
+/*Globals*/
 /* eslint-disable no-unused-vars */
 var userLoggedIn = false;
 var userEmail = undefined;
@@ -11,9 +10,8 @@ var userContext = null;
 var renderContext = null;
 
 /* eslint-enable no-unused-vars */
-/*
- * Messaging logistics
- */
+
+/** Messaging logistics*/
 
 // port for authentication related communication
 const portAuth = chrome.extension.connect({ name: "auth" });
@@ -57,11 +55,20 @@ portTeamData.onMessage.addListener((msg) => {
   // nothing for now
 });
 
+/* Client UI handlers */
 
-/*
- * Client UI handlers
- */
-
+//sets up the checkbox to be checked if distracting
+const setUpCheckbox = () =>{
+  var productiveBool = false;
+  for (var i = 0; i < userContext.domains.length; i++){
+    if (userContext.domains[i][0] === currentDomain)
+      productiveBool = !userContext.domains[i][1].productive;
+  }
+  if(productiveBool === true)
+    document.getElementById("productive").checked = true;
+  else
+    document.getElementById("productive").checked = false;
+};
 
 const updatecurrentDomain = () => {
   chrome.tabs.query({ active: true, lastFocusedWindow: true }, tabs => {
@@ -70,6 +77,31 @@ const updatecurrentDomain = () => {
     let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
     let domain = matches && matches[1];
     renderContext.currentDomain = domain;
+  });
+};
+
+// listens to slider and tells api.js to update productivity field
+const updateDomainProductiveHandler = () => {
+  // checkbox = true means distracting site so we must flip the bool
+  productiveBool = !(document.getElementById("productive").checked);
+  if (!currentDomain) {
+    console.error("[ERR] updateDomainProductiveHandler: currentDomain is null");
+    return;
+  }
+  // sanitize currentDomain
+  var urlParts = currentDomain.replace("http://", "").replace("https://", "").replace("www.", "").split(/[/?#]/);
+  currentDomain = urlParts[0];
+  var list = [];
+  var domainObj = {
+    url: currentDomain,
+    productive: productiveBool,
+    time: null,
+    visits: null
+  };
+  list.push(domainObj);
+  portUserData.postMessage({
+    task: "update-domain-productive",
+    domains: list
   });
 };
 
@@ -120,18 +152,14 @@ const badgesToggleHandler = () => {
   refresh();
 };
 
-/*
- * HTML rendering
- */
-
+/* HTML rendering*/
 
 const refresh = () => {
   const loginOptions = document.getElementsByClassName("login-options")[0];
   const userInfo = document.getElementsByClassName("user-info")[0];
 
   if (userContext.loggedIn) {
-    // display the screen tabs
-    showScreenTabs();
+    showScreenTabs(); // display the screen tabs
 
     // we're logged in, so display the user info
     loginOptions.style.display = "none";
@@ -148,6 +176,7 @@ const refresh = () => {
     if (renderContext.currentScreen === SCREEN_MY_STATS) {
       // display the user's stats
       showMyStats();
+      setUpCheckbox();
       hideElement("team-formation");
       hideElement("team-info");
       hideElement("team-leaderboard");
@@ -198,6 +227,7 @@ const initialize = () => {
   document.getElementsByClassName("login-email")[0].addEventListener("click", handleLoginEmail);
   document.getElementsByClassName("login-gmail")[0].addEventListener("click", handleLoginGmail);
   document.getElementsByClassName("badges-toggle")[0].addEventListener("click", badgesToggleHandler);
+  document.getElementById("productive").addEventListener("click", updateDomainProductiveHandler);
 
   // set default screen
   renderContext = { currentScreen: SCREEN_MY_STATS, currentDomain: null, showBadges: true };

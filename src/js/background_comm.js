@@ -38,6 +38,10 @@ chrome.extension.onConnect.addListener(function(port) {
       if (msg.task === "get-context"){
         sendContext();
       }
+      else if (msg.task === "update-domain-productive") {
+        console.log("UPDATE PRODUCTIVE MSG RECEIVED FOR: " + msg.domains);
+        setDomains(msg.domains);
+      }
     });
 
     portUserData.onDisconnect.addListener(() => portUserData = null);

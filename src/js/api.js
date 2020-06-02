@@ -1,7 +1,53 @@
+/* eslint-disable no-unused-vars */
 /*
  * Firebase communcation API
  */
 
+/*
+  * Sets the productive field for a list of given domains for a user
+  *
+  * parameters:
+  * List of domains (objects), each containing the following fields
+      Url (string)
+      Productive (boolean, can be null)
+      Time (int, can be null)
+      Visits (int, can be null)
+  *
+  * return
+  * 0 on success, null if user not logged in or error occurred
+  */
+const setDomains = async (domains) => {
+  const db = firebase.firestore();
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    return null;
+  }
+  try {
+    db.collection("users").doc(user.uid).get().then((snapshot) => {
+      for (let i = 0; i < domains.length; i++) { // iterate through each arg element
+        var domList = snapshot.data()["domains"];
+        console.log("[NOTE] setDomains: setting on: " + domains[i]);
+        var currUrl = domains[i].url;
+
+        if (!domList[currUrl]) {
+          console.error("[ERR] setDomains: domain not found in db");
+          return;
+        }
+        var editTime = (domains[i].time == null) ? domList[currUrl].time : domains[i].time;
+        var editVisits = (domains[i].visits == null) ? domList[currUrl].visits : domains[i].visits;
+        var editProd = (domains[i].productive == null) ? domList[currUrl].productive : domains[i].productive;
+        var sitesList = snapshot.data();
+        var userRef = db.collection("users").doc(user.uid);
+        sitesList["domains"][currUrl] = { time: editTime, productive: editProd, visits: editVisits };
+        userRef.set(sitesList);
+      }
+    });
+  } catch (error) {
+    console.error("[ERR] setDomains:", error);
+    return null;
+  }
+  return 0;
+};
 
 /*
  * Create user

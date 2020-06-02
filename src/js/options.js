@@ -16,6 +16,8 @@ document.addEventListener("DOMContentLoaded", function () {
     updateDomainProductive();
   });
 });
+
+
 /*
  * Updates the 'productive' flag for the domain for the user
  *
