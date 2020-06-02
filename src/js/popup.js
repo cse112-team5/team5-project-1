@@ -8,38 +8,38 @@ var userUid = undefined;
 
 var teamContext = null;
 var userContext = null;
+var renderContext = null;
 
-var currentDomain = null;
-var currentScreen = SCREEN_MY_STATS;
 /* eslint-enable no-unused-vars */
 /*
  * Messaging logistics
  */
 
 // port for authentication related communication
-const portAuth = chrome.extension.connect({ name: 'auth' });
+const portAuth = chrome.extension.connect({ name: "auth" });
 portAuth.onMessage.addListener((msg) => {
   // nothing here for now
 });
 
 
-const handleLoginEmail = () => {};
+const handleLoginEmail = () => { };
 
 const handleLoginGmail = () => {
   console.log("GMAIL");
-  portAuth.postMessage({ task: 'login-gmail' });
+  portAuth.postMessage({ task: "login-gmail" });
 };
 
 // port for user data related communication
-const portUserData = chrome.extension.connect({ name: 'user-data' });
+const portUserData = chrome.extension.connect({ name: "user-data" });
 portUserData.onMessage.addListener((msg) => {
-  if (msg.res === 'send-context') {
+  if (msg.res === "send-context") {
     userContext = {
       loggedIn: msg.loggedIn,
       id: msg.uid,
       email: msg.email,
       productivity: msg.userProductivity,
       domains: msg.userDomains,
+      badgesArr: msg.userBadges
     };
     teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode, membersData: msg.membersData };
     refresh();
@@ -48,11 +48,11 @@ portUserData.onMessage.addListener((msg) => {
 
 // grabs the context from background.js
 const getContext = () => {
-  portUserData.postMessage({ task: 'get-context' });
+  portUserData.postMessage({ task: "get-context" });
 };
 
 // port for team data related information
-const portTeamData = chrome.extension.connect({ name: 'team-data' });
+const portTeamData = chrome.extension.connect({ name: "team-data" });
 portTeamData.onMessage.addListener((msg) => {
   // nothing for now
 });
@@ -63,198 +63,61 @@ portTeamData.onMessage.addListener((msg) => {
  */
 
 
-function updateCurrentDomain(){
+const updatecurrentDomain = () => {
   chrome.tabs.query({ active: true, lastFocusedWindow: true }, tabs => {
     let url = tabs[0].url;
     // regex to split url from domain
     let matches = url.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i);
     let domain = matches && matches[1];
-    currentDomain = domain;
+    renderContext.currentDomain = domain;
   });
-}
+};
 
-function joinTeamHandler() {
-  if (teamContext.id){
+const joinTeamHandler = () => {
+  if (teamContext.id) {
     showError();
     return;
   }
   const inviteCode = document.getElementById("invite-code").value;
-  if (inviteCode.length !== 8) {
+  if (inviteCode.length !== INVITE_CODE_LENGTH) {
     return;
   }
-  portTeamData.postMessage({ task: 'join-team', inviteCode: inviteCode });
-}
+  portTeamData.postMessage({ task: "join-team", inviteCode: inviteCode });
+};
 
-function createTeamHandler() {
-  if (teamContext.id){
+const createTeamHandler = () => {
+  if (teamContext.id) {
     showError();
     return;
   }
-  const teamName = document.getElementById('new-team-name').value;
-  portTeamData.postMessage({ task: 'create-team', teamName: teamName });
-}
+  const teamName = document.getElementById("new-team-name").value;
+  portTeamData.postMessage({ task: "create-team", teamName: teamName });
+};
 
-function leaveTeamHandler(){
-  if (!teamContext.id){
+const leaveTeamHandler = () => {
+  if (!teamContext.id) {
     showError();
     return;
   }
-  portTeamData.postMessage({ task: 'leave-team' });
-}
+  portTeamData.postMessage({ task: "leave-team" });
+};
 
 // TODO figure out a way to consolidate this into one function,
 // that way we can switch over the argument rather than having
 // seperate functions for each screen
 const switchScreenMyTeamHandler = () => {
-  currentScreen = SCREEN_MY_TEAM;
+  renderContext.currentScreen = SCREEN_MY_TEAM;
   refresh();
 };
 
 const switchScreenMyStatsHandler = () => {
-  currentScreen = SCREEN_MY_STATS;
+  renderContext.currentScreen = SCREEN_MY_STATS;
   refresh();
 };
 
-/*
- * Element rendering togglers
- */
-
-
-function showInviteCode(){
-  const teamInfo = document.getElementsByClassName('team-info')[0];
-  teamInfo.style.display = "block";
-  document.getElementById('team-name').innerHTML = "Team name: " + teamContext.name;
-  document.getElementById('team-invite-code').innerHTML = "Team invite code: " + teamContext.inviteCode;
-}
-
-function hideInviteCode() {
-  const teamInfo = document.getElementsByClassName('team-info')[0];
-  teamInfo.style.display = "none";
-}
-
-function showTeamFormation(){
-  const teamFormation = document.getElementById("team-formation");
-  teamFormation.style.display = "block";
-}
-
-function hideTeamFormation() {
-  const teamFormation = document.getElementById("team-formation");
-  teamFormation.style.display = "none";
-}
-
-const showMyStats = () => {
-  const myStatsElement = document.getElementsByClassName('my-stats')[0];
-  myStatsElement.style.display = "block";
-
-  // update user's productivity score
-  const productivityScoreElement = document.getElementsByClassName('stats-productivity-val')[0];
-  if (userContext.productivity)
-    productivityScoreElement.innerHTML = userContext.productivity.toFixed(1) + "%";
-  else
-    productivityScoreElement.innerHTML = "N/A";
-
-  // update to display the current domain
-  if (currentDomain) {
-    this.document.getElementsByClassName('stats-cur-domain-val')[0].innerHTML = currentDomain;
-  }
-
-  // update the list of top sites
-  if (userContext.domains) {
-    var numSites = userContext.domains.length < MAX_SITES_LIST_LEN ?
-      userContext.domains.length : MAX_SITES_LIST_LEN;
-
-    var list = document.createElement('ol');
-    for (var i = 0; i < numSites; i++) {
-      var item = document.createElement('li');
-      item.appendChild(document.createTextNode(userContext.domains[i][0]));
-      list.appendChild(item);
-    };
-
-    document.getElementsByClassName('stats-top-sites')[0].innerHTML = 'Top ' + numSites + ' visted sites:';
-
-    // clears pre-existing list
-    document.getElementsByClassName('stats-top-sites-val')[0].innerHTML = '';
-    document.getElementsByClassName('stats-top-sites-val')[0].appendChild(list);
-  }
-};
-
-const hideMyStats = () => {
-  const myStatsElement = document.getElementsByClassName('my-stats')[0];
-  myStatsElement.style.display = 'none';
-};
-
-const showScreenTabs = () => {
-  const screenTabsElement = document.getElementsByClassName('screen-tabs')[0];
-  screenTabsElement.style.display = 'block';
-};
-
-const hideScreenTabs = () => {
-  const screenTabsElement = document.getElementsByClassName('screen-tabs')[0];
-  screenTabsElement.style.display = 'none';
-};
-
-const showLeaderBoard = () => {
-
-  console.log(teamContext.membersData);
-
-  // show and populate leaderboard if user is in a team
-  if (teamContext.membersData){
-
-    // create table element
-    let table = document.createElement('table');
-    table.style = "text-align: center; max-height: 70%";
-
-    // add caption/title
-    let tableTitle = document.createElement("caption");
-    tableTitle.innerText = "Team LeaderBoard";
-    table.appendChild(tableTitle);
-
-    // add header row to table
-    let header = document.createElement('tr');
-    let headerTitles = ["Rank", "Name", "Productivity", "Time Wasted"];
-    headerTitles.forEach((title)=>{
-      let elem = document.createElement('th');
-      elem.append(document.createTextNode(title));
-      header.appendChild(elem);
-    });
-    table.append(header);
-
-    // generate and add table rows based on user ranking
-    let count = 1;
-    teamContext.membersData.forEach(function(member){
-      if (member.productivity){
-        console.log(count);
-        let item = document.createElement('tr');
-        let values = [count, member.name, member.productivity + "%",
-          Math.floor(member.timeWasted / 3600) + " h " + (Math.floor(member.timeWasted % 60) >= 30 ? Math.floor(member.timeWasted / 60) + 1 : Math.floor(member.timeWasted / 60)) + " m"];
-
-        values.forEach((val)=>{
-          let elem = document.createElement('td');
-          elem.append(document.createTextNode(val));
-          item.appendChild(elem);
-        });
-        table.appendChild(item);
-        count++;
-      }
-    });
-
-    // clear current content within leaderboard element and add generated list of rankings
-    document.getElementsByClassName('team-leaderboard')[0].innerHTML = '';
-    document.getElementsByClassName('team-leaderboard')[0].style.display = 'block';
-    document.getElementsByClassName('team-leaderboard')[0].appendChild(table);
-  } else {
-    document.getElementsByClassName('team-leaderboard')[0].innerHTML = 'Error retrieving data for leaderboard';
-  }
-};
-
-const hideLeaderBoard = () => {
-  const leaderBoardElement = document.getElementsByClassName('team-leaderboard')[0];
-  leaderBoardElement.style.display = 'none';
-};
-
-const showError = ()  => {
-  const bodyElement = document.getElementsByTagName('body')[0];
-  bodyElement.innerHTML = "<h1>An error has been encountered. Please reopen the popup.</h1>";
+const badgesToggleHandler = () => {
+  renderContext.showBadges = document.getElementsByClassName("badges-toggle")[0].checked;
+  refresh();
 };
 
 /*
@@ -263,8 +126,8 @@ const showError = ()  => {
 
 
 const refresh = () => {
-  const loginOptions = document.getElementsByClassName('login-options')[0];
-  const userInfo = document.getElementsByClassName('user-info')[0];
+  const loginOptions = document.getElementsByClassName("login-options")[0];
+  const userInfo = document.getElementsByClassName("user-info")[0];
 
   if (userContext.loggedIn) {
     // display the screen tabs
@@ -273,73 +136,77 @@ const refresh = () => {
     // we're logged in, so display the user info
     loginOptions.style.display = "none";
     userInfo.style.display = "block";
-    document.getElementsByClassName('result-email')[0].innerHTML = "Logged in as: " + userContext.email;
+    document.getElementsByClassName("result-email")[0].innerHTML = "Logged in as: " + userContext.email;
 
-    console.log("REFRESH", currentScreen);
-    if (currentScreen === SCREEN_MY_STATS) {
+    console.log("REFRESH", renderContext.currentScreen);
+    if (renderContext.showBadges) {
+      showBadges();
+    } else {
+      hideElement("my-badges");
+    }
+
+    if (renderContext.currentScreen === SCREEN_MY_STATS) {
       // display the user's stats
       showMyStats();
-      hideTeamFormation();
-      hideInviteCode();
-      hideLeaderBoard();
+      hideElement("team-formation");
+      hideElement("team-info");
+      hideElement("team-leaderboard");
     }
     else {
       // show our current team if we're part of one, otherwise show the
       // team formation elements
       if (teamContext.id) {
-        hideTeamFormation();
+        hideElement("team-formation");
         showInviteCode();
         showLeaderBoard();
       }
       else {
         showTeamFormation();
-        hideInviteCode();
-        hideLeaderBoard();
+        hideElement("team-info");
+        hideElement("team-leaderboard");
       }
 
-      hideMyStats();
+      hideElement("my-stats");
     }
   }
   else {
     // hide the screen tabs
-    hideScreenTabs();
+    hideElement("screen-tabs");
 
     // we're not logged in, so display the login options
     loginOptions.style.display = "block";
     userInfo.style.display = "none";
 
-    hideTeamFormation();
-    hideInviteCode();
-    hideLeaderBoard();
+    hideElement("team-formation");
+    hideElement("team-info");
+    hideElement("team-leaderboard");
 
     // hide the user's stats
-    hideMyStats();
+    hideElement("my-stats");
+
+    hideElement("my-badges");
   }
 };
 
 const initialize = () => {
   // initialize html element listeners
-  document.getElementsByClassName('screen-tabs-my-stats')[0].addEventListener('click', switchScreenMyStatsHandler);
-  document.getElementsByClassName('screen-tabs-my-team')[0].addEventListener('click', switchScreenMyTeamHandler);
+  document.getElementsByClassName("screen-tabs-my-stats")[0].addEventListener("click", switchScreenMyStatsHandler);
+  document.getElementsByClassName("screen-tabs-my-team")[0].addEventListener("click", switchScreenMyTeamHandler);
   document.getElementById("leave-team-button").addEventListener("click", leaveTeamHandler);
   document.getElementById("new-team").addEventListener("click", createTeamHandler);
   document.getElementById("join-team").addEventListener("click", joinTeamHandler);
-  document.getElementsByClassName('login-email')[0].addEventListener('click', handleLoginEmail);
-  document.getElementsByClassName('login-gmail')[0].addEventListener('click', handleLoginGmail);
+  document.getElementsByClassName("login-email")[0].addEventListener("click", handleLoginEmail);
+  document.getElementsByClassName("login-gmail")[0].addEventListener("click", handleLoginGmail);
+  document.getElementsByClassName("badges-toggle")[0].addEventListener("click", badgesToggleHandler);
 
+  // set default screen
+  renderContext = { currentScreen: SCREEN_MY_STATS, currentDomain: null, showBadges: true };
   // other initializations
-  updateCurrentDomain();
-};
-
-
-window.onload = function () {
-  // TODO: do we need this?
-  // what's the difference between this and the listener for
-  // DOMContentLoaded?
+  updatecurrentDomain();
 };
 
 // initialize some handlers when the DOM has loaded
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener("DOMContentLoaded", function () {
   initialize();
 });
 

@@ -24,17 +24,19 @@ const createUser = async () => {
   }
 
   try {
-    const userDoc = await db.collection('users').doc(user.uid).get();
+    const userDoc = await db.collection("users").doc(user.uid).get();
 
     if (userDoc.exists) {
       // user document exists
-      return { id: userDoc.id, teamId: userDoc.data().teamId, domains: sortDomains(userDoc.data().domains) };
+      return { id: userDoc.id, teamId: userDoc.data().teamId, domains: sortDomains(userDoc.data().domains), badges: userDoc.data().badges, name: userDoc.data().name };
     } else { // user document doesn't exist, create it
       console.log("[NOTE] createUser: User doesn't exist. Creating doc for user.");
-      db.collection('users').doc(user.uid).set({
+      let badgeArr = new Array(MAX_BADGES).fill(false);
+      db.collection("users").doc(user.uid).set({
         domains: {},
         teamId: null,
-        name: user.displayName
+        name: user.displayName,
+        badges: badgeArr
       });
 
       return { id: userDoc.id, teamId: null };
@@ -65,7 +67,7 @@ const getDomains = async () => {
 
   // user is signed in.
   try {
-    const docRef = await db.collection('users').doc(user.uid).get();
+    const docRef = await db.collection("users").doc(user.uid).get();
     if (!docRef.exists) { // user document exists
       throw new Error("No such document");
     }
@@ -104,7 +106,7 @@ const incrementDomainActivity = (domain, increment) => {
   var tim = 0;
   var prod = false;
 
-  var ref = db.collection('users').doc(user.uid);
+  var ref = db.collection("users").doc(user.uid);
 
   ref.get().then(function (doc) {
 
@@ -112,7 +114,7 @@ const incrementDomainActivity = (domain, increment) => {
       console.log("Document data:", doc.data());
     } else { // user document doesn't exist, create it
       console.log("No doc found! Creating doc for user.");
-      db.collection('users').doc(user.uid).set({
+      db.collection("users").doc(user.uid).set({
         domains: {},
         teamId: null
       });
@@ -124,8 +126,10 @@ const incrementDomainActivity = (domain, increment) => {
   });
 
   // User is signed in.
-  db.collection('users').doc(user.uid).get().then((snapshot) => {
-    var domains = snapshot.data()["domains"];
+  db.collection("users").doc(user.uid).get().then((snapshot) => {
+    let domains = snapshot.data()["domains"];
+    let FieldPath = firebase.firestore.FieldPath;
+    let fp = new FieldPath("domains", domain);
 
     if (domain in domains) {
       vis = domains[domain]["visits"];
@@ -137,13 +141,7 @@ const incrementDomainActivity = (domain, increment) => {
       tim = 0;
       prod = true;
     }
-
-    var sitesList = snapshot.data();
-
-    var userRef = db.collection("users").doc(user.uid);
-    console.log("incrementing activity time for " + domain + " by " + increment);
-    sitesList["domains"][domain] = { time: tim + increment, productive: prod, visits: vis };
-    userRef.set(sitesList);
+    db.collection("users").doc(user.uid).update(fp,{time: tim + increment, productive: prod, visits: vis});
     return 0;
   });
 };
@@ -173,26 +171,10 @@ const incrementDomainVisits = (domain) => {
   var tim = 0;
   var prod = false;
 
-  // User is signed in.
-  var ref = db.collection('users').doc(user.uid);
-
-  ref.get().then(function (doc) {
-    if (doc.exists) { // user document exists
-      console.log("Document data:", doc.data());
-    } else { // user document doesn't exist
-      console.log("No doc found! Creating doc for user.");
-      db.collection('users').doc(user.uid).set({
-        domains: {},
-        teamId: null
-      });
-    }
-  }).catch(function (error) { // some error occurred
-    console.log("Error getting document:", error);
-    return -1;
-  });
-
-  db.collection('users').doc(user.uid).get().then((snapshot) => {
+  db.collection("users").doc(user.uid).get().then((snapshot) => {
     var domains = snapshot.data()["domains"];
+    let FieldPath = firebase.firestore.FieldPath;
+    let fp = new FieldPath("domains", domain);
 
     if (domain in domains) {
       vis = domains[domain]["visits"];
@@ -204,16 +186,52 @@ const incrementDomainVisits = (domain) => {
       tim = 0;
       prod = true;
     }
-
-    var sitesList = snapshot.data();
-
-    console.log("incrementing visits for " + domain);
-    var userRef = db.collection("users").doc(user.uid);
-    sitesList["domains"][domain] = { time: tim, productive: prod, visits: vis + 1 };
-    userRef.set(sitesList);
+    db.collection("users").doc(user.uid).update(fp,{time: tim, productive: prod, visits: vis + 1});
     return 0;
   });
   return 0;
+};
+
+/*
+ * set's this user's badges on the database with the given array of badges parameter
+ *
+ * parameters:
+ *       badgeNum: index number of badge in the firebase array
+ *       badgeOwned: True if user now owns badge, False otherwise
+ *
+ * return:
+ *      null if there is an error; void otherwise
+ */
+const setBadges = async (badgeNum, badgeOwned) => {
+  const db = firebase.firestore();
+  const user = firebase.auth().currentUser;
+
+  if (!user) {
+    console.error("[ERR] setBadges: Not signed in");
+    return null;
+  }
+
+  if (!userContext.badges){
+    console.error("[ERR] setBadges: badge array not set");
+    return null;
+  }
+
+  badgesArr = userContext.badges;
+  badgesArr[badgeNum] = badgeOwned;
+  let res = await db.collection("users").doc(user.uid).update({ badges: badgesArr })
+    .then(function () {
+      return true;
+    })
+    .catch(function (error) {
+      console.error("Error updating document: badges ", error);
+      return false;
+    });
+
+  if(res) {
+    userContext.badges[badgeNum] = badgeOwned;
+    return userContext.badges;
+  }
+  return null;
 };
 
 /*
@@ -229,6 +247,7 @@ const incrementDomainVisits = (domain) => {
  *      an object with the following
  *      productivity: 0.0 - 100.0 if valid, null otherwise
  *      domains: the domains object retrieved from firebase
+ *      badges: array of booleans representing the badges the user has
  */
 const getUserStats = async () => {
   const db = firebase.firestore();
@@ -241,7 +260,7 @@ const getUserStats = async () => {
   }
 
   let userStats = await getUserStatsHelper(user.uid);
-  return { productivity: userStats.productivity, domains: userStats.domains };
+  return { productivity: userStats.productivity, domains: userStats.domains, badges: userStats.badges, timeWasted: userStats.timeWasted };
 };
 
 /*
@@ -261,13 +280,14 @@ const getUserStats = async () => {
  *      domains: the domains object retrieved from firebase
  *      timeWasted: total time spent in the time unit of seconds on unproductive domains
  *      name: name of the user with the specified uid
+ *      badges: array of booleans representing the badges the user has
  */
 // TODO add name to returned data
 const getUserStatsHelper = async (uid) => {
   try {
     const db = firebase.firestore();
 
-    const userDoc = await db.collection('users').doc(uid).get();
+    const userDoc = await db.collection("users").doc(uid).get();
     if (!userDoc.exists) {
       console.error("[ERR] getUserStats: User document doesn't exist");
       return null;
@@ -290,7 +310,7 @@ const getUserStatsHelper = async (uid) => {
     if (totalTime > 0) {
       productivityPercent = (prodTime / totalTime) * 100; // cannot divide by zero, return error
     }
-    return { productivity: productivityPercent, domains: domains, timeWasted: (totalTime - prodTime), name: userDoc.data()["name"] };
+    return { productivity: productivityPercent, domains: domains, timeWasted: (totalTime - prodTime), name: userDoc.data()["name"], badges: userDoc.data()["badges"] };
   } catch (err) {
     console.log("[ERR] getUserstatsHelper: " + err);
   }
@@ -337,12 +357,12 @@ const createTeam = async (teamName) => {
 
   if (!user) return null;
   try {
-    const docRef = await db.collection('teams').add({
+    const docRef = await db.collection("teams").add({
       name: teamName,
       members: [],
       inviteCode: generateId(8),
     });
-    const userDoc = await db.collection('teams').doc(docRef.id).get();
+    const userDoc = await db.collection("teams").doc(docRef.id).get();
 
     // return relevant data
     return { id: docRef.id, ...(userDoc.data()) };
@@ -385,15 +405,15 @@ const joinTeam = async (teamId, inviteCode) => {
 
     const members = teamDoc.data().members;
     members.push(user.uid);
-    db.collection("teams").doc(teamDoc.id).update({members: members});
-    db.collection("users").doc(user.uid).update({teamId: teamDoc.id});
+    db.collection("teams").doc(teamDoc.id).update({ members: members });
+    db.collection("users").doc(user.uid).update({ teamId: teamDoc.id });
 
     // need to add current user to list of members
-    let teamDocData = {...teamDoc.data()};
+    let teamDocData = { ...teamDoc.data() };
     teamDocData.members.push(user.uid);
 
     // return relevant data
-    return {id: teamDoc.id, ...teamDocData};
+    return { id: teamDoc.id, ...teamDocData };
 
   } catch (error) {
     console.error("[ERR] joinTeam:", error);

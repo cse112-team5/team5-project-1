@@ -9,10 +9,10 @@
  * Firebase auth object. So, there's no need to pass in user id as a parameter as long as the user is
  * logged in.
  */
-document.addEventListener('DOMContentLoaded', function () {
-  var link = document.getElementById('link');
+document.addEventListener("DOMContentLoaded", function () {
+  var link = document.getElementById("link");
   // onClick's logic below:
-  link.addEventListener('click', function () {
+  link.addEventListener("click", function () {
     updateDomainProductive();
   });
 });
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
  * return
  *      0 upon success, 1 otherwise
  */
-function updateDomainProductive() {
+const updateDomainProductive = () => {
   const db = firebase.firestore();
   // Update for the logged in user
   //
@@ -35,21 +35,21 @@ function updateDomainProductive() {
   // if there is no logged in user
   //
   // NOTE: use firebase.auth().currentUser.uid as the identifier
-  const portUserData = chrome.extension.connect({ name: 'user-data-options' });
-  portUserData.postMessage({ task: 'get-user-id' });
+  const portUserData = chrome.extension.connect({ name: "user-data-options" });
+  portUserData.postMessage({ task: "get-user-id" });
   var uid = "";
   portUserData.onMessage.addListener((msg) => {
     console.log("RECEVE", msg);
-    if (msg.res === 'logged_in') {
+    if (msg.res === "logged_in") {
       console.log("user logged in");
       uid = msg.user_uid;
       console.log(uid);
       const user = db.collection("users").doc(uid);
-      domain = document.getElementById('unproductive_domain').value;
-      var urlParts = domain.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+      domain = document.getElementById("unproductive_domain").value;
+      var urlParts = domain.replace("http://", "").replace("https://", "").replace("www.", "").split(/[/?#]/);
       var domain = urlParts[0];
-      var val = getRadioVal(document.getElementById('selection'), 'if');
-      var isTrue = (val === 'Productive');
+      var val = getRadioVal(document.getElementById("selection"), "if");
+      var isTrue = (val === "Productive");
       user.get().then(documentSnapshot => {
         if (documentSnapshot.exists) {
           let data = documentSnapshot.data();
@@ -79,10 +79,10 @@ function updateDomainProductive() {
       console.log("user not logged in");
     }
   });
-}
+};
 
 //helper function to get user selection
-function getRadioVal(form, name) {
+const getRadioVal = (form, name) => {
   var val;
   // get list of radio buttons with specified name
   var radios = form.elements[name];
@@ -95,4 +95,4 @@ function getRadioVal(form, name) {
     }
   }
   return val; // return value of checked radio or undefined if none checked
-}
+};

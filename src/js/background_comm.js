@@ -22,54 +22,58 @@ var portUserDataOptions = null;
 var portTeamData = null;
 
 chrome.extension.onConnect.addListener(function(port) {
-  if (port.name === 'auth') {
+  if (port.name === "auth") {
     portAuth = port;
     portAuth.onMessage.addListener(function(msg) {
-      if (msg.task === 'login-gmail') {
+      if (msg.task === "login-gmail") {
         loginGmail();
       }
     });
 
     portAuth.onDisconnect.addListener(() => portAuth = null);
   }
-  else if (port.name === 'user-data'){
+  else if (port.name === "user-data"){
     portUserData = port;
     portUserData.onMessage.addListener(function(msg) {
-      if (msg.task === 'get-context'){
+      if (msg.task === "get-context"){
         sendContext();
       }
     });
 
     portUserData.onDisconnect.addListener(() => portUserData = null);
   }
-  else if(port.name === 'user-data-options'){
+  else if(port.name === "user-data-options"){
     portUserDataOptions = port;
     portUserDataOptions.onMessage.addListener(function(msg) {
-      if (msg.task === 'get-user-id'){
+      if (msg.task === "get-user-id"){
         getUserId();
       }
     });
 
     portUserDataOptions.onDisconnect.addListener(() => portUserDataOptions = null);
   }
-  else if(port.name === 'team-data'){
+  else if(port.name === "team-data"){
     portTeamData = port;
     portTeamData.onMessage.addListener(function(msg) {
-      if (msg.task === 'create-team'){
-        createTeamHandler(msg.teamName);
-
-      } else if (msg.task === 'join-team'){
-        joinTeamHandler(msg.inviteCode);
-
-      } else if (msg.task === 'leave-team'){
-        leaveTeamHandler();
-
-      }
+      handleTeamDataMessage(msg);
     });
 
     portTeamData.onDisconnect.addListener(() => portTeamData = null);
   }
 });
+
+const handleTeamDataMessage = (msg) => {
+  if (msg.task === "create-team"){
+    createTeamHandler(msg.teamName);
+
+  } else if (msg.task === "join-team"){
+    joinTeamHandler(msg.inviteCode);
+
+  } else if (msg.task === "leave-team"){
+    leaveTeamHandler();
+
+  }
+};
 
 
 /*
@@ -78,7 +82,7 @@ chrome.extension.onConnect.addListener(function(port) {
 
 const loginGmail = () => {
   firebase.auth().signInWithPopup(provider).then((result) => {
-    console.log('[NOTE] loginGmail: Logged in', user);
+    console.log("[NOTE] loginGmail: Logged in", user);
   }).catch((error) => {
     // Handle Errors here.
     var errorCode = error.code;
@@ -104,6 +108,7 @@ const sendContext = () => {
   var teamName = null;
   var teamInviteCode = null;
   var teamMembersData = null;
+  var userBadges = null;
 
   // user info if logged in
   if (user) {
@@ -111,6 +116,7 @@ const sendContext = () => {
     uid = user.uid;
     userProductivity = userContext.productivity;
     userDomains = userContext.domains;
+    userBadges = userContext.badges;
   }
 
   // team info if part of team
@@ -121,31 +127,34 @@ const sendContext = () => {
     teamMembersData = teamContext.membersData;
   }
 
-  if (portUserData)
+  if (portUserData) {
     portUserData.postMessage({
-      res: 'send-context',
+      res: "send-context",
       loggedIn: user !== null,
       email: email,
       uid: uid,
       userProductivity: userProductivity,
       userDomains: userDomains,
+      userBadges: userBadges,
       teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode, membersData: teamMembersData,
     });
+  }
+  triggerBadges();
 };
 
 /*
  * portUserDataOptions handlers
  */
-function getUserId() {
+const getUserId = () => {
   const user = firebase.auth().currentUser;
   if(user) {
     if (portUserDataOptions)
       portUserDataOptions.postMessage({
-        res: 'logged_in',
+        res: "logged_in",
         user_uid: user.uid
       });
   }
-}
+};
 
 /*
  * portTeamData handlers
@@ -166,7 +175,7 @@ const joinTeamHandler = async (inviteCode) => {
   const team = await joinTeam(null, inviteCode);
 
   teamContext = team;
-
+  setTimeout(updateMyTeam, UPDATE_TEAM_DELAY); // need one second delay for database to update or there will be violation of database rule
   sendContext();
 };
 

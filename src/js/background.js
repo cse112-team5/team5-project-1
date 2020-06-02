@@ -19,15 +19,19 @@ const initApp = () => {
 
     // create the user if new
     userContext = await createUser();
-    if (userContext.teamId)
+
+    if (userContext.teamId) {
       teamContext = await getTeam(userContext.teamId);
+      updateMyTeam();
+    }
 
     // add handlers to keep data up to date
-    setInterval(updateStats, 5000);
+    setInterval(updateStats, UPDATE_DELAY);
     // NOTE if you decrease this timer while testing,
     // be sure to bring it back up later
-    setInterval(updateMyTeam, 5000);
-    setInterval(updateDatabaseWithDomainTimes, 60000);
+    setInterval(updateMyTeam, UPDATE_DELAY);
+    setInterval(updateDatabaseWithDomainTimes, UPDATE_DELAY);
+    setInterval(triggerBadges, UPDATE_DELAY);
     chrome.tabs.onUpdated.addListener(handleUpdate);
     chrome.tabs.onActivated.addListener(handleChangeTab);
 
@@ -67,7 +71,7 @@ const updateDatabaseWithDomainTimes = () =>{
   domainsToUpdate.forEach((increment, domain, map) => {
     // convert to seconds
     if (domain === undefined || domain === null) return;
-    incrementDomainActivity(domain, Math.floor(increment / 1000));
+    incrementDomainActivity(domain, Math.floor(increment / NUM_MILLISECONDS_IN_SECONDS));
   });
   domainsToUpdate = new Map(); // clear list
 };
@@ -80,7 +84,7 @@ const handleUpdate = (tabId, changeInfo, tab) => {
     return;
   }
 
-  var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+  var urlParts = url.replace("http://", "").replace("https://", "").replace("www.", "").split(/[/?#]/);
   cleanDomain = urlParts[0];
 
   if (curPage.domain === cleanDomain) {
@@ -98,7 +102,7 @@ const handleChangeTab = (obj) => {
       return;
     }
     let url = tabs[0].url;
-    var urlParts = url.replace('http://', '').replace('https://', '').replace('www.', '').split(/[/?#]/);
+    var urlParts = url.replace("http://", "").replace("https://", "").replace("www.", "").split(/[/?#]/);
     domain = urlParts[0];
     updatecurPage(domain, tabs[0].id);
   });
@@ -132,7 +136,7 @@ const updatecurPage = (domain, tabId) => {
   curPage.tabId = parseInt(tabId);
 };
 
-async function addURL(domain) {
+const addURL = async (domain) => {
   const user = firebase.auth().currentUser;
 
   if (!user) {
@@ -143,7 +147,7 @@ async function addURL(domain) {
   // User is signed in.
   userDomains = await getDomains(user);
   incrementDomainVisits(domain);
-}
+};
 
 
 // update the productivity periodically
@@ -153,7 +157,7 @@ const updateStats = async () => {
     return;
   }
 
-  console.log('[NOTE] updateStates: updating');
+  console.log("[NOTE] updateStats: updating");
   // user is signed in.
   const newStats = await getUserStats();
   if (!newStats) return;
@@ -161,19 +165,22 @@ const updateStats = async () => {
   // this can be null, which should display as "N/A" in popup.js
   userContext.productivity = newStats.productivity;
   userContext.domains = sortDomains(newStats.domains);
+  userContext.badges = newStats.badges;
+  userContext.timeWasted = newStats.timeWasted;
 
   sendContext();
 };
 
 const updateMyTeam = async () => {
   const user = firebase.auth().currentUser;
-  if(!user || !teamContext) {
+  if(!user || !teamContext || !teamContext.members) {
     return;
   }
 
+  console.log(teamContext);
   let list = await Promise.all(teamContext.members.map(async (uid)=>{
     let temp = await getUserStatsHelper(uid);
-    delete temp.domains;
+    if(temp && temp.domains) { delete temp.domains; }
     return temp;
   }));
 
@@ -184,6 +191,9 @@ const updateMyTeam = async () => {
   sendContext();
 };
 
+const triggerBadges = () => {
+  triggerNewMember();
+};
 
 /*
  * Other initializations

@@ -8,8 +8,35 @@ body {
   width: 450px;
   height: 450px;
 }
+
+input.apple-switch {
+  position: relative;
+  -webkit-appearance: none;
+  outline: none;
+  width: 40px;
+  height: 20px;
+  background-color: #fff;
+  border: 1px solid #D9DADC;
+  border-radius: 40px;
+  box-shadow: inset -20px 0 0 0 #D9DADC;
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
+}
+
+input.apple-switch:checked {
+  box-shadow: inset 20px 0 0 0 #4ed164;
+  border-color: #4ed164;
+}
+
+.badges{
+  max-width: 10%;
+  max-height: 10%;
+  float: left;
+  margin: 1em;
+}
     </style>
     <script src="../js/constants.js"></script>
+    <script src="../js/popup_rendering.js"></script>
     <script src="../js/popup.js"></script>
   </head>
 
@@ -32,9 +59,23 @@ body {
     </div>
 
     <div class="my-stats">
+      <div class="my-badges-container">
+        <label for="badge-toggler">Show Badges</label>
+        <input class="badges-toggle apple-switch" type="checkbox" name="badge-toggler" checked="false">
+        <div class="my-badges">
+          <ul>
+          </ul>
+        </div>
+      </div>
+      
       <div class="stats-productivity">
         <h2>Productivity</h2>
         <p class="stats-productivity-val"></p>
+      </div>
+
+      <div class="stats-time-wasted">
+        <h2>Time wasted today</h2>
+        <div class="stats-time-wasted-val"></div>
       </div>
 
       <div class="stats-cur-domain">
@@ -49,7 +90,7 @@ body {
     </div>
 
     <div class="my-team">
-      <div id="team-formation">
+      <div class="team-formation">
         <div>
           <form id="selection">
             <label for="new-team-name">Team name:</label><br>
