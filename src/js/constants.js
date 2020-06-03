@@ -15,5 +15,22 @@ const badges_image_files = ["first place day 5.svg",
   "first place day 15.svg",
   "least wasted time.svg",
   "most improvement (ranking).svg",
-  "new member.svg"];
+  "new member.svg",
+  "productivity below 70.svg",
+  "70 productivity.svg",
+  "75 productivity.svg",
+  "80 productivity.svg",
+  "85 productivity.svg",
+  "90 productivity.svg",
+  "95 productivity.svg",
+  "most time spent in productive sites.svg"];
+const BELOW_70_BADGE_IDX = 6;
+const LEAST_WASTED_TIME_BADGE_IDX = 3;
+const NEW_MEMBER_BADGE_IDX = 5;
+const MOST_PRODUCTIVE_BADGE_IDX = 13;
+const MAX_TOP_LEADERBOARD_PLACE = 3;
+const leaderboard_ranking_images = [
+  "no1.svg",
+  "no2.svg",
+  "no3.svg"];
 /* eslint-enable no-unused-vars */
