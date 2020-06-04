@@ -177,6 +177,7 @@ const refresh = () => {
     if (renderContext.currentScreen === SCREEN_MY_STATS) {
       // display the user's stats
       showMyStats();
+      showRecommendation();
       setUpCheckbox();
       hideElement("team-formation");
       hideElement("team-info");
@@ -197,6 +198,7 @@ const refresh = () => {
       }
 
       hideElement("my-stats");
+      hideRecommendation();
     }
   }
   else {
@@ -215,6 +217,7 @@ const refresh = () => {
     hideElement("my-stats");
 
     hideElement("my-badges");
+    hideRecommendation();
   }
 };
 
