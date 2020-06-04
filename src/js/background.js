@@ -193,6 +193,9 @@ const updateMyTeam = async () => {
 
 const triggerBadges = () => {
   triggerNewMember();
+  triggerNumProductivity();
+  triggerLeastTimeWasted();
+  triggerMostProductive();
 };
 
 /*

@@ -100,7 +100,7 @@ const showLeaderBoard = () => {
 
     // add header row to table
     let headerTitles = ["Rank", "Name", "Productivity", "Time Wasted"];
-    table = addRowToTable(headerTitles, table);
+    table = addRowToTable(headerTitles, table, true);
 
     // generate and add table rows based on user ranking
     let count = 1;
@@ -108,9 +108,10 @@ const showLeaderBoard = () => {
       if (!member) {
         return;
       }
+
       if (member.productivity) {
-        let values = [count, member.name, member.productivity + "%", timeToString(member.timeWasted)];
-        table = addRowToTable(values, table);
+        let values = [count, member.name, member.productivity.toFixed(2) + "%", timeToString(member.timeWasted)];
+        table = addRowToTable(values, table, false);
       }
       count += 1;
     });
@@ -124,13 +125,19 @@ const showLeaderBoard = () => {
   }
 };
 
-const addRowToTable = (row, table) => {
+const addRowToTable = (row, table, header) => {
   let item = document.createElement("tr");
-  row.forEach((val) => {
+  for (let i = 0; i < row.length; i++){
     let elem = document.createElement("td");
-    elem.append(document.createTextNode(val));
+    if (!header && i === 0 && row[i] >= 1 && row[i] <= MAX_TOP_LEADERBOARD_PLACE){
+      let image = document.createElement("img");
+      image.src = "../images/Vector graphics/" + leaderboard_ranking_images[row[i] - 1];
+      elem.append(image);
+    } else {
+      elem.append(document.createTextNode(row[i]));
+    }
     item.appendChild(elem);
-  });
+  };
   table.appendChild(item);
   return table;
 };
@@ -147,11 +154,12 @@ const showBadges = () => {
 
   const badgesList = document.getElementsByClassName("my-badges")[0].children[0];
   badgesList.innerHTML = "";
-  badgesList.style = "list-style-type: none;";
+  badgesList.style = "list-style-type: none; overflow-x: scroll;";
   for (let i = 0; i < badges_image_files.length; i++) {
     let badge = document.createElement("li");
     let img = document.createElement("img");
     img.src = "../images/Vector graphics/" + badges_image_files[i];
+    img.title = badges_image_files[i];
     img.setAttribute("class", "badges");
     if (!userContext.badgesArr[i]) {
       img.style = "filter: grayscale(100)";

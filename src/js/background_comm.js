@@ -113,6 +113,7 @@ const sendContext = () => {
   var teamInviteCode = null;
   var teamMembersData = null;
   var userBadges = null;
+  var userTimeWasted = null;
 
   // user info if logged in
   if (user) {
@@ -121,6 +122,7 @@ const sendContext = () => {
     userProductivity = userContext.productivity;
     userDomains = userContext.domains;
     userBadges = userContext.badges;
+    userTimeWasted = userContext.timeWasted;
   }
 
   // team info if part of team
@@ -140,6 +142,7 @@ const sendContext = () => {
       userProductivity: userProductivity,
       userDomains: userDomains,
       userBadges: userBadges,
+      userTimeWasted: userTimeWasted,
       teamId: teamId, teamName: teamName, teamInviteCode: teamInviteCode, membersData: teamMembersData,
     });
   }

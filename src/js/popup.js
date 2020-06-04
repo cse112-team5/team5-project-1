@@ -37,6 +37,7 @@ portUserData.onMessage.addListener((msg) => {
       email: msg.email,
       productivity: msg.userProductivity,
       domains: msg.userDomains,
+      timeWasted: msg.userTimeWasted,
       badgesArr: msg.userBadges
     };
     teamContext = { id: msg.teamId, name: msg.teamName, inviteCode: msg.teamInviteCode, membersData: msg.membersData };
@@ -61,7 +62,7 @@ portTeamData.onMessage.addListener((msg) => {
 const setUpCheckbox = () =>{
   var productiveBool = false;
   for (var i = 0; i < userContext.domains.length; i++){
-    if (userContext.domains[i][0] === currentDomain)
+    if (userContext.domains[i][0] === renderContext.currentDomain)
       productiveBool = !userContext.domains[i][1].productive;
   }
   if(productiveBool === true)
