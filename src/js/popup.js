@@ -83,6 +83,7 @@ const updatecurrentDomain = () => {
 
 // listens to slider and tells api.js to update productivity field
 const updateDomainProductiveHandler = () => {
+  var currentDomain = renderContext.currentDomain;
   // checkbox = true means distracting site so we must flip the bool
   productiveBool = !(document.getElementById("productive").checked);
   if (!currentDomain) {
