@@ -61,14 +61,22 @@ portTeamData.onMessage.addListener((msg) => {
 //sets up the checkbox to be checked if distracting
 const setUpCheckbox = () =>{
   var productiveBool = false;
+  var domainExists = false;
   for (var i = 0; i < userContext.domains.length; i++){
-    if (userContext.domains[i][0] === renderContext.currentDomain)
-      productiveBool = !userContext.domains[i][1].productive;
+    if (userContext.domains[i][0] === renderContext.currentDomain){
+      productiveBool = userContext.domains[i][1].productive;
+	  domainExists = true;
+	}
+	else if ("www." + userContext.domains[i][0] === renderContext.currentDomain){
+      productiveBool = userContext.domains[i][1].productive;
+	  domainExists = true;
+	}
   }
-  if(productiveBool === true)
-    document.getElementById("productive").checked = true;
-  else
-    document.getElementById("productive").checked = false;
+
+  if(productiveBool === true || !domainExists)
+    document.getElementById("productive").checked = false; //toggle off
+  else 
+    document.getElementById("productive").checked = true; //toggle on
 };
 
 const updatecurrentDomain = () => {
@@ -85,12 +93,12 @@ const updatecurrentDomain = () => {
 const updateDomainProductiveHandler = () => {
   // checkbox = true means distracting site so we must flip the bool
   productiveBool = !(document.getElementById("productive").checked);
-  if (!currentDomain) {
+  if (!renderContext.currentDomain) {
     console.error("[ERR] updateDomainProductiveHandler: currentDomain is null");
     return;
   }
   // sanitize currentDomain
-  var urlParts = currentDomain.replace("http://", "").replace("https://", "").replace("www.", "").split(/[/?#]/);
+  var urlParts = renderContext.currentDomain.replace("http://", "").replace("https://", "").replace("www.", "").split(/[/?#]/);
   currentDomain = urlParts[0];
   var list = [];
   var domainObj = {
