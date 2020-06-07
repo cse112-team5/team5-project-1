@@ -65,17 +65,17 @@ const setUpCheckbox = () =>{
   for (var i = 0; i < userContext.domains.length; i++){
     if (userContext.domains[i][0] === renderContext.currentDomain){
       productiveBool = userContext.domains[i][1].productive;
-	  domainExists = true;
-	}
-	else if ("www." + userContext.domains[i][0] === renderContext.currentDomain){
+      domainExists = true;
+    }
+    else if ("www." + userContext.domains[i][0] === renderContext.currentDomain){
       productiveBool = userContext.domains[i][1].productive;
-	  domainExists = true;
-	}
+      domainExists = true;
+    }
   }
 
   if(productiveBool === true || !domainExists)
     document.getElementById("productive").checked = false; //toggle off
-  else 
+  else
     document.getElementById("productive").checked = true; //toggle on
 };
 
