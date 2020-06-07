@@ -91,6 +91,7 @@ const updatecurrentDomain = () => {
 
 // listens to slider and tells api.js to update productivity field
 const updateDomainProductiveHandler = () => {
+  var currentDomain = renderContext.currentDomain;
   // checkbox = true means distracting site so we must flip the bool
   productiveBool = !(document.getElementById("productive").checked);
   if (!renderContext.currentDomain) {
@@ -185,6 +186,7 @@ const refresh = () => {
     if (renderContext.currentScreen === SCREEN_MY_STATS) {
       // display the user's stats
       showMyStats();
+      showRecommendation();
       setUpCheckbox();
       hideElement("team-formation");
       hideElement("team-info");
@@ -205,6 +207,7 @@ const refresh = () => {
       }
 
       hideElement("my-stats");
+      hideRecommendation();
     }
   }
   else {
@@ -223,6 +226,7 @@ const refresh = () => {
     hideElement("my-stats");
 
     hideElement("my-badges");
+    hideRecommendation();
   }
 };
 

@@ -80,6 +80,37 @@ const showMyStats = () => {
 
 };
 
+const showRecommendation = () => {
+  // find the non-productive domain with the highest time spent
+  let maxTime = 0;
+  let maxDomain = "N/A";
+  for(let i = 0; i < userContext.domains; i++) {
+    if (userContext.domains[i][1].productive === true)
+      continue;
+
+    let currDomain = userContext.domains[i][0];
+    if (userContext.domains[i][1].time > maxTime) {
+      maxTime = userContext[i][1].time;
+      maxDomain = currDomain;
+    }
+  }
+
+  if (maxDomain === "N/A") {
+    var newRec = "No recommendation yet. Hint: Try labelling some sites as distracting.";
+    console.log("No recommendation");
+  } else {
+    var newRec = "Based on your browsing habits, try to spend less time on " + maxDomain;
+    console.log("Recommendation: spend less time on " + maxDomain);
+  }
+
+  document.getElementsByClassName("stats-recommendation")[0].innerHTML = newRec;
+  document.getElementsByClassName("stats-recommendation")[0].style.display = "block";
+};
+
+const hideRecommendation = () => {
+  document.getElementsByClassName("stats-recommendation")[0].style.display = "none";
+};
+
 const showScreenTabs = () => {
   showElement("screen-tabs");
 };
