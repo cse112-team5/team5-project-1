@@ -23,7 +23,7 @@ const setDomains = async (domains) => {
     return null;
   }
   try {
-    const snapshot = await db.collection("users").doc(user.uid).get()
+    const snapshot = await db.collection("users").doc(user.uid).get();
     var userRef = db.collection("users").doc(user.uid);
     var sitesList = snapshot.data();
 
