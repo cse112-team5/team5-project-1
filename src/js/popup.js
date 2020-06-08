@@ -169,6 +169,7 @@ const refresh = () => {
   const userInfo = document.getElementsByClassName("user-info")[0];
 
   if (userContext.loggedIn) {
+    document.body.style.backgroundImage = "none"; //REMOVE the login page screen background gif after logging in
     showScreenTabs(); // display the screen tabs
 
     // we're logged in, so display the user info
@@ -237,10 +238,9 @@ const initialize = () => {
   document.getElementById("leave-team-button").addEventListener("click", leaveTeamHandler);
   document.getElementById("new-team").addEventListener("click", createTeamHandler);
   document.getElementById("join-team").addEventListener("click", joinTeamHandler);
-  document.getElementsByClassName("login-email")[0].addEventListener("click", handleLoginEmail);
   document.getElementsByClassName("login-gmail")[0].addEventListener("click", handleLoginGmail);
-  document.getElementsByClassName("badges-toggle")[0].addEventListener("click", badgesToggleHandler);
-  document.getElementById("productive").addEventListener("click", updateDomainProductiveHandler);
+  //document.getElementsByClassName("badges-toggle")[0].addEventListener("click", badgesToggleHandler);
+  //document.getElementById("productive").addEventListener("click", updateDomainProductiveHandler);
 
   // set default screen
   renderContext = { currentScreen: SCREEN_MY_STATS, currentDomain: null, showBadges: true };

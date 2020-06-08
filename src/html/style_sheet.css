@@ -1,0 +1,317 @@
+body {
+  width: 300px;
+  height: 450px;
+  background-color: #3C3C3C;
+  background-image: url('../images/login_background.gif');
+  background-size: cover;
+  color: white;
+}
+button{
+	border: none;
+}
+
+input.apple-switch {
+  padding: 10px 0 0 0;
+  -webkit-appearance: none;
+  outline: none;
+  width: 40px;
+  height: 20px;
+  background-color: #fff;
+  border: 1px solid #D9DADC;
+  border-radius: 40px;
+  box-shadow: inset -20px 0 0 0 #D9DADC;
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
+}
+
+.user-icon{
+  width: 20px;
+  height: 20px;
+}
+
+input.apple-switch:checked {
+  box-shadow: inset 20px 0 0 0 #4ed164;
+  border-color: #4ed164;
+}
+
+.my-stats-slider{
+  display: inline-block;
+}
+.unicode-link{
+  color: white;
+}
+#productive{
+  display: table-cell;
+	vertical-align: middle;
+}
+
+#new-team{
+  display: table-cell;
+	vertical-align: middle;
+}
+
+#join-team{
+  display: table-cell;
+	vertical-align: middle;
+}
+
+.stats-cur-domain-val{
+  text-decoration: underline;
+}
+
+.stats-top-sites{
+  margin: 0;
+}
+
+.logo{
+	max-width: 20px;
+	max-height: 20px;
+}
+
+.badges-unordered-list{
+  text-decoration: none;	
+}
+
+.badges{
+  max-width: 25%;
+  max-height: 25%;
+  margin: 0.5em;
+	color: rgba(50.0, 50.0, 50.0, 2.0);
+}
+
+ul{
+  white-space: nowrap;
+  overflow: auto;
+}
+
+.li-badge{
+  list-style-type: none;
+  display: inline;
+}
+
+.productivity-score-background{
+	background-image: url('../images/Vector\ graphics/0_.svg');
+	background-repeat: no-repeat;
+	width: 100px;
+	height: 100px;
+	margin: 0;
+	display: table;
+}
+
+.stats-productivity-val{
+	font-size: 24px;
+	margin: 0;
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.stats-time-wasted-val{
+  font-size: 14px;
+  margin: 2px;
+}
+.title{
+	font-size: 24px;
+	margin: 0 10px 0 0;
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 25px 0 0;
+}
+th, td {
+  padding: 2px 7px 0 0;
+  text-align: left;
+  font-size: 12px;
+  font-family: 'Quicksand', sans-serif;
+}
+.leave-team-button{
+	border: none;
+	background-color: #FF6666;
+	border-radius: 25px;
+	color: white;
+	float: right;
+}
+.leave-team-button:hover{
+	border: none;
+	background-color: #FF0000;
+	border-radius: 25px;
+	opacity: 0.7;
+  transform: scale(1,1);
+	cursor: pointer;
+}
+
+#team-name{
+	font-size: 24px;
+	margin: 0;
+	padding: 0;
+	font-family: 'Quicksand', sans-serif;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+#team-invite-code{
+	font-size: 12px;
+	margin: 2px;
+	padding: 0;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.stats-productivity{
+	border-radius: 25px;
+	background-color: gray;
+	padding: 10px;
+	margin: 5px 0 5px 0;
+}
+
+.team-info{
+	border-radius: 25px;
+	background-color: gray;
+	padding: 10px;
+	margin: 5px 0 5px 0;
+}
+
+caption{
+	font-size: 24px;
+	margin: 10px 0 0 0;
+	font-family: 'Quicksand', sans-serif; //removed Bunjee!!
+}
+div[class*=box] {
+  height: 33.33%;
+  width: 100%; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.box-1 { background-color: #FF6766; }
+.box-2 { 
+	background-color: #3C3C3C; 
+	vertical-align: middle;
+	margin: 150px 0 0 0;
+	font-family: 'Quicksand', sans-serif;
+	padding: 20px;
+}
+.box-3 { 
+	background-color: #1F1F1F; 
+	max-width: 25%; 
+	max-height: 10%;
+	padding: 8px;
+	border-radius: 2px;
+}
+
+.btn {
+  text-align: center;
+  cursor: pointer;
+	border-radius: 2px;
+}
+
+
+/* 
+========================
+      BUTTON THREE
+========================
+*/
+.btn-three {
+  color: #FFF;
+  transition: all 0.5s;
+  position: relative;
+	border-radius: 2px;
+}
+.btn-three::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-color: rgba(255,255,255,0.1);
+  transition: all 0.3s;
+	border-radius: 2px;
+}
+.btn-three:hover::before {
+  opacity: 0 ;
+  transform: scale(0.5,0.5);
+	border-radius: 2px;
+}
+.btn-three::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  transition: all 0.3s;
+  border: 1px solid rgba(255,255,255,0.5);
+  transform: scale(.2,.2);
+	border-radius: 2px;
+}
+.btn-three:hover::after {
+    opacity: 1;
+	border-radius: 25px;
+    transform: scale(1,1);
+	border-radius: 2px;
+}
+
+.pretty-table
+{
+  padding: 0;
+  margin: 0;
+  border-collapse: collapse;
+  border: 1px solid #333;
+  font-size: 0.9em;
+  color: white;
+}
+
+.pretty-table caption
+{
+  caption-side: bottom;
+  font-size: 0.9em;
+  font-style: italic;
+  text-align: right;
+  padding: 0.5em 0;
+
+}
+
+.pretty-table th, .pretty-table td
+{
+  border: 1px dotted #666;
+  padding: 0.5em;
+  text-align: left;
+  color: white;
+}
+
+.pretty-table th[scope=col]
+{
+  color: #000;
+  background-color: #8fadcc;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  border-bottom: 2px solid white;
+  border-right: 2px solid white;
+}
+
+.pretty-table th+th[scope=col]
+{
+  color: #fff;
+  background-color: #7d98b3;
+  border-right: 2px solid white;
+}
+
+.pretty-table th[scope=row]
+{
+  background-color: #b8cfe5;
+  border-right: 2px solid #333;
+}
+
+.pretty-table tr.alt th, .pretty-table tr.alt td
+{
+  color: #2a4763;
+}
+
+.pretty-table tr:hover th[scope=row], .pretty-table tr:hover td
+{
+  background-color: gray;
+  color: white;
+}
