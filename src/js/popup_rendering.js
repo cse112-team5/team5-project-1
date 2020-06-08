@@ -19,8 +19,8 @@ const timeToString = (time) => {
 const showInviteCode = () => {
   const teamInfo = document.getElementsByClassName("team-info")[0];
   teamInfo.style.display = "block";
-  document.getElementById("team-name").innerHTML = "Team name: " + teamContext.name;
-  document.getElementById("team-invite-code").innerHTML = "Team invite code: " + teamContext.inviteCode;
+  document.getElementById("team-name").innerHTML = teamContext.name;
+  document.getElementById("team-invite-code").innerHTML = "Invite code: " + teamContext.inviteCode;
 };
 
 const showTeamFormation = () => {
@@ -43,10 +43,32 @@ const showMyStats = () => {
 
   // update user's productivity score
   const productivityScoreElement = document.getElementsByClassName("stats-productivity-val")[0];
-  productivityScoreElement.innerHTML = "N/A";
   if (userContext.productivity) {
-    productivityScoreElement.innerHTML = userContext.productivity.toFixed(1) + "%";
+    var productivity_score = userContext.productivity.toFixed(1);
+    productivityScoreElement.innerHTML = productivity_score + "%";
+    var productivity_score_backgroud = document.getElementsByClassName("productivity-score-background")[0];
+	
+    if (productivity_score >= 99.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/80-99_.svg')";
+    else if(productivity_score >= 80.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/80-99_.svg')";
+    else if(productivity_score >= 70.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/70-80_.svg')";
+    else if(productivity_score >= 55.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/55-70_.svg')";
+    else if(productivity_score >= 45.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/45-55_.svg')";
+    else if(productivity_score >= 30.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/30-45_.svg')";	
+    else if(productivity_score >= 20.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/20-30_.svg')";
+    else if(productivity_score >= 1.0)
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/1-20_.svg')";
+    else
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/0_.svg')";
   }
+  else
+    productivityScoreElement.innerHTML = "...";
 
   // update user's time wasted
   const timeWastedElement = document.getElementsByClassName("stats-time-wasted-val")[0];
@@ -122,6 +144,7 @@ const showLeaderBoard = () => {
 
     // create table element
     let table = document.createElement("table");
+    table.className = "pretty-table";
     table.style = "text-align: center; max-height: 70%";
 
     // add caption/title
@@ -185,9 +208,9 @@ const showBadges = () => {
 
   const badgesList = document.getElementsByClassName("my-badges")[0].children[0];
   badgesList.innerHTML = "";
-  badgesList.style = "list-style-type: none; overflow-x: scroll;";
   for (let i = 0; i < badges_image_files.length; i++) {
     let badge = document.createElement("li");
+    badge.className = "li-badge";
     let img = document.createElement("img");
     img.src = "../images/Vector graphics/" + badges_image_files[i];
     img.title = badges_image_files[i];
@@ -198,7 +221,6 @@ const showBadges = () => {
     badge.appendChild(img);
     badgesList.appendChild(badge);
   }
-  document.getElementsByClassName("my-badges")[0].style.display = "block";
 };
 
 /* eslint-enable no-unused-vars */

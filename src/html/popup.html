@@ -2,124 +2,94 @@
 <html>
 
   <head>
-    <style>
-
-body {
-  width: 450px;
-  height: 450px;
-}
-input.apple-switch {
-  position: relative;
-  -webkit-appearance: none;
-  outline: none;
-  width: 40px;
-  height: 20px;
-  background-color: #fff;
-  border: 1px solid #D9DADC;
-  border-radius: 40px;
-  box-shadow: inset -20px 0 0 0 #D9DADC;
-  -webkit-transition: 0.2s;
-  transition: 0.2s;
-}
-
-input.apple-switch:checked {
-  box-shadow: inset 20px 0 0 0 #4ed164;
-  border-color: #4ed164;
-}
-
-.badges{
-  max-width: 10%;
-  max-height: 10%;
-  float: left;
-  margin: 1em;
-}
-    </style>
+    <link rel="stylesheet" href="style_sheet.css">
+    <link href="https://fonts.googleapis.com/css2?family=Annie+Use+Your+Telescope&family=Bungee&family=Quicksand:wght@600&display=swap" rel="stylesheet">
     <script src="../js/constants.js"></script>
     <script src="../js/popup_rendering.js"></script>
     <script src="../js/popup.js"></script>
   </head>
 
   <body>
-    <h1>Phantime</h1>
-    <div class="login"> 
-      <div class="login-options">
-        <button class="login-email">Login with Email</button>
-        <button class="login-gmail">Login with Gmail</button>
-      </div>
 
-      <div class="user-info">
-        <p class="result-email"></p>
-      </div>
-    </div>
-
-    <div class="screen-tabs">
-      <button class="screen-tabs-my-stats">My Stats</button>
-      <button class="screen-tabs-my-team">My Team</button>
-    </div>
+  <div class="screen-tabs">
+      <h1 class="title"><img src="../images/logo.PNG" class="logo">Phantime</h1>
+      <button class="screen-tabs-my-stats box-3 btn btn-three">My Stats</button>
+      <button class="screen-tabs-my-team box-3 btn btn-three">My Team</button>
+  </div>
+  
+  <center>
+		<div class="login"> 
+		  <div class="login-options">
+		  	<h1 class="title"><img src="../images/logo.PNG" class="logo"> Phantime</h1>
+			<button class="login-gmail box-2 btn btn-three">Login with Gmail</button>
+		  </div>
+		</div>
+  </center>
+  
+  <div class="user-info">
+      <p class="result-email"></p>
+  </div>
 
     <div class="my-stats">
-      <div class="my-badges-container">
-        <label for="badge-toggler">Show Badges</label>
-        <input class="badges-toggle apple-switch" type="checkbox" name="badge-toggler" checked="false">
-        <div class="my-badges">
-          <ul>
-          </ul>
+        <div class="stats-cur-domain">
+            <div class="stats-cur-domain-val"></div>
         </div>
-      </div>
+        
+        <div class="my-stats-slider">
+            <label for="productive">Mark site as distracting <input class="apple-switch" type="checkbox" id="productive" checked="false"></label>
+        </div>
+
+        <div class="stats-productivity">
+          <center>
+            <div class="productivity-score-background">
+              <p class="stats-productivity-val" hint="Productivity score"></p>
+            </div>
+            <center>
+              <div class="stats-time-wasted"></div>
+              <div class="stats-time-wasted-val"></div>
+            </center>
+          </center>
+        </div>
+          
+        <div>
+          <h2 class="stats-top-sites"></h2>
+          <p class="stats-top-sites-val"></p>
+        </div>
+        
+        <div>
+            <p class="stats-recommendation"></p>
+        </div>
       
-      <div class="stats-productivity">
-        <h2>Productivity</h2>
-        <p class="stats-productivity-val"></p>
-      </div>
-
-      <div class="stats-time-wasted">
-        <h2>Time wasted today</h2>
-        <div class="stats-time-wasted-val"></div>
-      </div>
-
-      <div class="stats-cur-domain">
-        <h2>You are currently on</h2>
-        <div class="stats-cur-domain-val"></div>
-      </div>
-
-      <div class="my-stats-slider">
-        <label for="productive">Mark this as a distracting site</label>
-        <input class="apple-switch" type="checkbox" id="productive" checked="false">
-      </div>
-      
-      <div>
-        <h2 class="stats-top-sites"></h2>
-        <p class="stats-top-sites-val"></p>
-      </div>
-
-      <div>
-        <p class="stats-recommendation"></p>
+      <div class="my-badges">
+        <ul class="badges-unordered-list">
+        </ul>
       </div>
     </div>
 
     <div class="my-team">
       <div class="team-formation">
-        <div>
+        <div class="form-entry-div">
           <form id="selection">
-            <label for="new-team-name">Team name:</label><br>
+            <label for="new-team-name"><a href="http://www.unicode.org/emoji/charts/full-emoji-list.html" target="_blank" class="unicode-link">Unicode emojis</a> Copy and Paste them below!</label><br>
             <input type="text" id="new-team-name" name="new-team-name"><br>
           </form>
-          <button id="new-team">Create team</button>
+          <button class="login-gmail box-1 btn btn-three" id="new-team">Create team</button>
         </div>
 
-        <div>
+        <div class="form-entry-div">
           <form id="join-team-form">
-            <label for="invite-code">Invite Code:</label><br>
+            <label for="invite-code">Invite Code</label><br>
             <input type="text" id="invite-code" name="invite-code"><br>
           </form>
-          <button id="join-team">Join team</button>
+          <button class="login-gmail box-1 btn btn-three" id="join-team">Join team</button>
         </div>
       </div>
 
       <div class="team-info">
         <p id="team-name"></p>
+        <br>
         <p id="team-invite-code"></p>
-        <button id="leave-team-button">Leave Team</button>
+        <button class="leave-team-button" id="leave-team-button">Leave Team</button>
       </div>
       <div class="team-leaderboard"></div>
 
