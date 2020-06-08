@@ -21,7 +21,7 @@ var portUserData = null;
 var portUserDataOptions = null;
 var portTeamData = null;
 
-chrome.extension.onConnect.addListener(function(port) {
+chrome.extension.onConnect.addListener((port) => {
   if (port.name === "auth") {
     portAuth = port;
     portAuth.onMessage.addListener(function(msg) {
@@ -34,13 +34,16 @@ chrome.extension.onConnect.addListener(function(port) {
   }
   else if (port.name === "user-data"){
     portUserData = port;
-    portUserData.onMessage.addListener(function(msg) {
+    portUserData.onMessage.addListener(async (msg) => {
       if (msg.task === "get-context"){
         sendContext();
       }
       else if (msg.task === "update-domain-productive") {
         console.log("UPDATE PRODUCTIVE MSG RECEIVED FOR: " + msg.domains);
-        setDomains(msg.domains);
+        const newDomains = await setDomains(msg.domains);
+        userContext.domains = sortDomains(newDomains);
+        sendContext();
+
       }
     });
 

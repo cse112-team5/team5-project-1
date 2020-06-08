@@ -23,25 +23,27 @@ const setDomains = async (domains) => {
     return null;
   }
   try {
-    db.collection("users").doc(user.uid).get().then((snapshot) => {
-      for (let i = 0; i < domains.length; i++) { // iterate through each arg element
-        var domList = snapshot.data()["domains"];
-        console.log("[NOTE] setDomains: setting on: " + domains[i]);
-        var currUrl = domains[i].url;
+    const snapshot = await db.collection("users").doc(user.uid).get()
+    var userRef = db.collection("users").doc(user.uid);
+    var sitesList = snapshot.data();
 
-        if (!domList[currUrl]) {
-          console.error("[ERR] setDomains: domain not found in db");
-          return;
-        }
-        var editTime = (domains[i].time == null) ? domList[currUrl].time : domains[i].time;
-        var editVisits = (domains[i].visits == null) ? domList[currUrl].visits : domains[i].visits;
-        var editProd = (domains[i].productive == null) ? domList[currUrl].productive : domains[i].productive;
-        var sitesList = snapshot.data();
-        var userRef = db.collection("users").doc(user.uid);
-        sitesList["domains"][currUrl] = { time: editTime, productive: editProd, visits: editVisits };
-        userRef.set(sitesList);
+    for (let i = 0; i < domains.length; i++) { // iterate through each arg element
+      var domList = snapshot.data()["domains"];
+      console.log("[NOTE] setDomains: setting on: " + domains[i]);
+      var currUrl = domains[i].url;
+
+      if (!domList[currUrl]) {
+        console.error("[ERR] setDomains: domain not found in db");
+        return;
       }
-    });
+      var editTime = (domains[i].time == null) ? domList[currUrl].time : domains[i].time;
+      var editVisits = (domains[i].visits == null) ? domList[currUrl].visits : domains[i].visits;
+      var editProd = (domains[i].productive == null) ? domList[currUrl].productive : domains[i].productive;
+      sitesList["domains"][currUrl] = { time: editTime, productive: editProd, visits: editVisits };
+    }
+
+    userRef.set(sitesList);
+    return sitesList["domains"];
   } catch (error) {
     console.error("[ERR] setDomains:", error);
     return null;
