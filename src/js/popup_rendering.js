@@ -43,11 +43,11 @@ const showMyStats = () => {
 
   // update user's productivity score
   const productivityScoreElement = document.getElementsByClassName("stats-productivity-val")[0];
+
   if (userContext.productivity) {
     var productivity_score = userContext.productivity.toFixed(1);
     productivityScoreElement.innerHTML = productivity_score + "%";
     var productivity_score_backgroud = document.getElementsByClassName("productivity-score-background")[0];
-	
     if (productivity_score >= 99.0)
       productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/80-99_.svg')";
     else if(productivity_score >= 80.0)
@@ -59,7 +59,7 @@ const showMyStats = () => {
     else if(productivity_score >= 45.0)
       productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/45-55_.svg')";
     else if(productivity_score >= 30.0)
-      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/30-45_.svg')";	
+      productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/30-45_.svg')";
     else if(productivity_score >= 20.0)
       productivity_score_backgroud.style.backgroundImage = "url('../images/Vector\ graphics/20-30_.svg')";
     else if(productivity_score >= 1.0)

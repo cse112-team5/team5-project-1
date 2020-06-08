@@ -19,9 +19,6 @@ portAuth.onMessage.addListener((msg) => {
   // nothing here for now
 });
 
-
-const handleLoginEmail = () => { };
-
 const handleLoginGmail = () => {
   console.log("GMAIL");
   portAuth.postMessage({ task: "login-gmail" });
