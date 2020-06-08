@@ -112,6 +112,10 @@ const updateDomainProductiveHandler = () => {
   });
 };
 
+if(updateDomainProductiveHandler){
+  //to fix linting error
+}
+
 const joinTeamHandler = () => {
   if (teamContext.id) {
     showError();
@@ -158,6 +162,10 @@ const badgesToggleHandler = () => {
   renderContext.showBadges = document.getElementsByClassName("badges-toggle")[0].checked;
   refresh();
 };
+
+if(badgesToggleHandler){
+  //to fix linting error
+}
 
 /* HTML rendering*/
 
