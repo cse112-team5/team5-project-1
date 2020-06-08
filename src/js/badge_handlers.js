@@ -11,7 +11,7 @@ const triggerNewMember = () => {
   if (!userContext || !userContext.badges){
     return;
   }
-  if (!userContext.badges[0]){
+  if (!userContext.badges[NEW_MEMBER_BADGE_IDX]){
     setBadges(NEW_MEMBER_BADGE_IDX, true);
   }
   return;
