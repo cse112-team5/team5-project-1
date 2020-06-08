@@ -26,6 +26,7 @@ const initApp = () => {
     }
 
     // add handlers to keep data up to date
+    updateStats();
     setInterval(updateStats, UPDATE_DELAY);
     // NOTE if you decrease this timer while testing,
     // be sure to bring it back up later
