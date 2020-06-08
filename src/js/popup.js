@@ -244,7 +244,6 @@ const initialize = () => {
   document.getElementById("new-team").addEventListener("click", createTeamHandler);
   document.getElementById("join-team").addEventListener("click", joinTeamHandler);
   document.getElementsByClassName("login-gmail")[0].addEventListener("click", handleLoginGmail);
-  //document.getElementsByClassName("badges-toggle")[0].addEventListener("click", badgesToggleHandler);
   document.getElementById("productive").addEventListener("click", updateDomainProductiveHandler);
 
   // set default screen
