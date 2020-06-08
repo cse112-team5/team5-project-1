@@ -245,7 +245,7 @@ const initialize = () => {
   document.getElementById("join-team").addEventListener("click", joinTeamHandler);
   document.getElementsByClassName("login-gmail")[0].addEventListener("click", handleLoginGmail);
   //document.getElementsByClassName("badges-toggle")[0].addEventListener("click", badgesToggleHandler);
-  //document.getElementById("productive").addEventListener("click", updateDomainProductiveHandler);
+  document.getElementById("productive").addEventListener("click", updateDomainProductiveHandler);
 
   // set default screen
   renderContext = { currentScreen: SCREEN_MY_STATS, currentDomain: null, showBadges: true };
