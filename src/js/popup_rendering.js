@@ -106,13 +106,13 @@ const showRecommendation = () => {
   // find the non-productive domain with the highest time spent
   let maxTime = 0;
   let maxDomain = "N/A";
-  for(let i = 0; i < userContext.domains; i++) {
+  for(let i = 0; i < userContext.domains.length; i++) {
     if (userContext.domains[i][1].productive === true)
       continue;
 
     let currDomain = userContext.domains[i][0];
     if (userContext.domains[i][1].time > maxTime) {
-      maxTime = userContext[i][1].time;
+      maxTime = userContext.domains[i][1].time;
       maxDomain = currDomain;
     }
   }
