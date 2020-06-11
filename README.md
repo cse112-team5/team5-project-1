@@ -24,3 +24,12 @@ Use npm script: `npm run lint`
 
 ### Running the tests
 TBC 
+
+### Want to Contribute?
+Contact jualbert@ucsd.edu to become a contributor.  
+Head on over to our website and read through our quick documentation section!   
+Once there, you'll see that we provide a neat, short tutorial to make your first commit (:  
+
+### Build Environment
+Windows: You can download 'git bash' or use the powershell which comes with your PC to run git commands.  
+Mac + Linux: You can use the terminal that already comes installed with your computer.
