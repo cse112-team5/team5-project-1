@@ -25,8 +25,8 @@ firebase.auth().signInWithPopup(googleProvider).then(function(result) {
     // The firebase.auth.AuthCredential type that was used.
     var credential = error.credential;
     // ...
-  });
- 
+});
+
 
 // api
 async function testGetDomain() {
