@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Jasmine Spec Runner v3.5.0</title>
+
+  <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
+  
+
+  <!-- include source files here... -->
+  <script src="../js/background.js"></script>
+  <script src="../js/options.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/util.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/background_comm.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/popup.js"></script>
+
+
+</head>
+
+<body>
+  <h1>API Tests</h1>
+  <table border=1>
+    <tr>
+      <td>Test getDomain</td>
+      <td id="test1"></td>
+    </tr>
+    <tr>
+      <td>Test incrementDomainVisits</td>
+      <td id="test4"></td>
+    </tr>
+    <tr>
+      <td>Test getProductivity</td>
+      <td id="test5"></td>
+    </tr>
+    <tr>
+      <td>Test incrementDomainActivity</td>
+      <td id="test6"></td>
+    </tr>
+    <tr>
+      <td>Test createTeam</td>
+      <td id="test7"></td>
+    </tr>
+    <tr>
+      <td>Test getTeam</td>
+      <td id="test8"></td>
+    </tr>
+    <tr>
+      <td>Test joinTeam</td>
+      <td id="test9"></td>
+    </tr>
+    <tr>
+      <td>Test leaveTeam</td>
+      <td id="test10"></td>
+    </tr>
+    
+  </table>
+
+  <h1>Background Tests</h1>
+  <table border=1>
+    <tr>
+      <td>Test addUrl</td>
+      <td id="test2"></td>
+    </tr>
+    <tr>
+      <td>Test addSameUrl</td>
+      <td id="test3"></td>
+    </tr>
+  </table>
+
+  <h1>Util Tests</h1>
+  <table border=1>
+    <tr>
+      <td>Test generateID</td>
+      <td id="test11"></td>
+    </tr>
+  </table>
+
+
+  <script src="background.test.js"></script>
+  <script src="util.test.js"></script>
+</body>
+
+</html>
