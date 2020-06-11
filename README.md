@@ -31,5 +31,5 @@ Head on over to our website and read through our quick documentation section!
 Once there, you'll see that we provide a neat, short tutorial to make your first commit (:  
 
 ### Build Environment
-Windows: All you need to be able to run git commands. You can download 'git bash' or use the powershell which comes with your PC.  
+Windows: You can download 'git bash' or use the powershell which comes with your PC to run git commands.  
 Mac + Linux: You can use the terminal that already comes installed with your computer.
